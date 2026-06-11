@@ -1,88 +1,149 @@
 import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import { useAuth } from '../hooks/useAuth';
+import API from '../lib/api';
+import toast from 'react-hot-toast';
+import { BookOpen, Award, GraduationCap } from 'lucide-react';
+
+type UserRole = 'student' | 'expert';
 
 export default function Register() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [regNumber, setRegNumber] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [role, setRole] = useState<UserRole>('student');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    department: '',
+    semester: 1,
+    expertise: ''
+  });
   const [loading, setLoading] = useState(false);
-  const login = useAuth((state) => state.login);
+
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: name === 'semester' ? parseInt(value, 10) : value 
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
-    
+
+    const isSystemAdminEmail = formData.email.toLowerCase() === 'admin@college.edu';
+    const payload = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      department: formData.department,
+      role: isSystemAdminEmail ? 'admin' : role,
+      ...(!isSystemAdminEmail && role === 'student' && { semester: formData.semester }),
+      ...(!isSystemAdminEmail && role === 'expert' && { expertise: formData.expertise })
+    };
+
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/register', { 
-        name, 
-        email, 
-        regNumber, 
-        password 
-      });
-      
-      // Successfully map isolated data nodes straight to Zustand hook store parameters
-      login(res.data.user, res.data.accessToken);
-      navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Structural validation failed.');
+      const res = await API.post('/auth/register', payload);
+      const { token, user } = res.data;
+
+      login(user, token);
+      toast.success("Account created successfully!");
+
+      if (user.role === 'admin') navigate('/admin');
+      else if (user.role === 'expert') navigate('/expert-dashboard');
+      else navigate('/dashboard');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Registration runtime rejection.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-slate-950 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b10_1px,transparent_1px),linear-gradient(to_bottom,#1e293b10_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
-
-      <div className="relative w-full max-w-md bg-slate-900/40 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl space-y-6">
-        <div className="space-y-2 text-center">
-          <h2 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400">Initialize Identity</h2>
-          <p className="text-slate-400 text-sm">Register your credentials on the blockchain node</p>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <div className="bg-indigo-600 text-white p-4 rounded-2xl shadow-xs">
+              <BookOpen size={40} />
+            </div>
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Create Account</h1>
+          <p className="text-gray-600 mt-2">Join NoteVault Portal Ecosystem</p>
         </div>
 
-        {error && (
-          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs p-3 rounded-xl flex items-center space-x-2">
-            <span>⚠️</span>
-            <span>{error}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleRegister} className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Full Name</label>
-            <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 text-sm" placeholder="John Doe" required />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">University Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 text-sm" placeholder="admin@batchflow.com or identity@stu.lk" required />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Registration Number</label>
-            <input type="text" value={regNumber} onChange={e => setRegNumber(e.target.value)} className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 text-sm" placeholder="e.g., SE/2024/045" required />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Password</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 text-sm" placeholder="••••••••" required />
-          </div>
-
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-[0.98] mt-2 flex items-center justify-center"
+        <div className="bg-white p-1.5 rounded-2xl shadow-xs border border-gray-100 flex gap-2 mb-6">
+          <button
+            type="button"
+            onClick={() => setRole('student')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-xl transition-all ${
+              role === 'student' && formData.email.toLowerCase() !== 'admin@college.edu'
+                ? 'bg-indigo-600 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-50'
+            }`}
           >
-            {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Register Identity'}
+            <GraduationCap size={18} /> Student
           </button>
-        </form>
+          <button
+            type="button"
+            onClick={() => setRole('expert')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-xl transition-all ${
+              role === 'expert' && formData.email.toLowerCase() !== 'admin@college.edu'
+                ? 'bg-indigo-600 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <Award size={18} /> Expert
+          </button>
+        </div>
 
-        <p className="text-center text-xs text-slate-500">
-          Already verified? <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition underline underline-offset-4">Sign In</Link>
-        </p>
+        <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name</label>
+              <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
+              <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
+              {formData.email.toLowerCase() === 'admin@college.edu' && (
+                <p className="mt-1.5 text-xs text-amber-600 font-semibold animate-pulse">✨ System Admin Signature Identified</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+              <input type="password" name="password" value={formData.password} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Department</label>
+              <input type="text" name="department" value={formData.department} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
+            </div>
+
+            {formData.email.toLowerCase() !== 'admin@college.edu' && role === 'student' && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Current Semester</label>
+                <select name="semester" value={formData.semester} onChange={handleChange} className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <option key={s} value={s}>Semester {s}</option>)}
+                </select>
+              </div>
+            )}
+
+            {formData.email.toLowerCase() !== 'admin@college.edu' && role === 'expert' && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Area of Expertise</label>
+                <input type="text" name="expertise" value={formData.expertise} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
+              </div>
+            )}
+
+            <button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-semibold py-3.5 rounded-xl shadow-xs transition-colors mt-2">
+              {loading ? "Processing Secure Account..." : "Create Account"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

@@ -1,46 +1,33 @@
-import { create } from 'zustand';
+import { useState, useEffect } from 'react';
+import { User } from '../types';
 
-// Define the blueprint shape for a logged-in User profile node
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-  regNumber: string;
-  role: 'student' | 'admin';
-}
+export const useAuth = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-// Define the shape of our authentication store state and actions
-interface AuthState {
-  user: User | null;
-  accessToken: string | null;
-  login: (user: User, token: string) => void;
-  logout: () => void;
-}
-
-export const useAuth = create<AuthState>((set) => ({
-  // Initialize state values safely by parsing string items directly from localStorage
-  user: (() => {
-    try {
-      const storedUser = localStorage.getItem('bf_user');
-      return storedUser ? JSON.parse(storedUser) : null;
-    } catch {
-      return null;
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
     }
-  })(),
-  
-  accessToken: localStorage.getItem('bf_token') || null,
+    setLoading(false);
+  }, []);
 
-  // Action executed upon successful verification API responses
-  login: (user, token) => {
-    localStorage.setItem('bf_user', JSON.stringify(user));
-    localStorage.setItem('bf_token', token);
-    set({ user, accessToken: token });
-  },
+  const login = (userData: User, token: string) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+  };
 
-  // Action executed to wipe tokens and close secure workspace connections
-  logout: () => {
-    localStorage.removeItem('bf_user');
-    localStorage.removeItem('bf_token');
-    set({ user: null, accessToken: null });
-  },
-}));
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
+  const getAuthToken = (): string | null => {
+    return localStorage.getItem('token');
+  };
+
+  return { user, login, logout, loading, getAuthToken };
+};

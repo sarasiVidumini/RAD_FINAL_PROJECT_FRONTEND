@@ -1,10 +1,19 @@
-<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>rad_final_project_frontend</title>
+    
+    <!-- CSP Fix -->
+    <meta 
+      http-equiv="Content-Security-Policy" 
+      content="default-src 'self'; 
+               script-src 'self' 'unsafe-inline'; 
+               style-src 'self' 'unsafe-inline'; 
+               img-src 'self' data: https:; 
+               connect-src 'self' http://localhost:5000 http://127.0.0.1:5000 ws:;" />
+
+    <title>NoteVault</title>
   </head>
   <body>
     <div id="root"></div>
