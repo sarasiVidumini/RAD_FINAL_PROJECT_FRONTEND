@@ -4,8 +4,11 @@ import toast from 'react-hot-toast';
 import { 
   BookOpen, Search, Filter, Download, 
   Brain, Layers, ArrowRight, X, CheckCircle2, 
-  HelpCircle, Timer, Sparkles, AlertTriangle 
+  HelpCircle, Timer, Sparkles, AlertTriangle,
+  Award, MessageSquare, ExternalLink, ClipboardList
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import PrivateChatModal from '../../components/PrivateChatModal'; // Importing your real-world chatbox window
 
 interface Note {
   _id: string;
@@ -23,8 +26,20 @@ interface QuizQuestion {
   correct: number;
 }
 
+interface StudentRequest {
+  _id: string;
+  title: string;
+  subject: string;
+  semester: number;
+  description: string;
+  status: 'open' | 'fulfilled';
+  fulfilledBy?: { _id: string; name: string };
+  fulfilledNote?: { _id: string; title: string; files: string[] };
+}
+
 export default function Dashboard() {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [requests, setRequests] = useState<StudentRequest[]>([]); // New Student Demand tracking matrix state
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedSemester, setSelectedSemester] = useState('');
@@ -33,6 +48,9 @@ export default function Dashboard() {
   const [studyMode, setStudyMode] = useState(false);
   const [generatingQuiz, setGeneratingQuiz] = useState(false);
   
+  // Chat Overlay State
+  const [activeChatUser, setActiveChatUser] = useState<{ id: string; name: string } | null>(null);
+
   // AI Quiz Interactive Matrix States
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
@@ -44,6 +62,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchNotes();
+    fetchStudentRequests(); // Fetch demands concurrently
     return () => stopTimer();
   }, [selectedSemester]);
 
@@ -80,6 +99,15 @@ export default function Dashboard() {
     }
   };
 
+  const fetchStudentRequests = async () => {
+    try {
+      const res = await API.get('/requests');
+      setRequests(res.data || []);
+    } catch (error) {
+      console.error("Failed to fetch student requests ecosystem map.");
+    }
+  };
+
   const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -99,7 +127,7 @@ export default function Dashboard() {
     const loadingToast = toast.loading("Analyzing notes & prompting Gemini AI...");
     
     try {
-      // FIXED: Added timeout override object to give the LLM enough time to respond completely
+
       const res = await API.post('/notes/generate-quiz', {
         title: note.title,
         subject: note.subject,
@@ -189,6 +217,22 @@ export default function Dashboard() {
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mt-2">Welcome to Your Knowledge Vault</h1>
             <p className="text-indigo-100 mt-2 text-sm md:text-base max-w-xl">Review curated peer source notes, track your academic progress, and run automated self-assessment revision quizzes.</p>
           </div>
+
+          {/* New Path Component Shortcut to StudentExperts page directory */}
+          <Link 
+            to="/experts" 
+            className="shrink-0 bg-white/10 hover:bg-white/20 border border-white/20 p-4 rounded-2xl flex items-center gap-4 transition duration-200 group text-left"
+          >
+            <div className="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center shrink-0">
+              <Award size={22} />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold flex items-center gap-1 text-white">
+                Consult Experts <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform"/>
+              </h4>
+              <p className="text-[11px] text-indigo-200 max-w-[160px]">Open real-world chat with domain specialists</p>
+            </div>
+          </Link>
         </div>
       </div>
 
@@ -225,47 +269,125 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Note Feed */}
-          <div className="lg:col-span-2 space-y-6">
-            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-              <Layers className="text-indigo-600" size={20}/>
-              Available Materials ({notes.length})
-            </h2>
+          <div className="lg:col-span-2 space-y-10">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 mb-6">
+                <Layers className="text-indigo-600" size={20}/>
+                Available Materials ({notes.length})
+              </h2>
 
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[1,2,3,4].map((n) => (
-                  <div key={n} className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4 animate-pulse">
-                    <div className="h-4 bg-slate-200 rounded w-1/3"></div>
-                    <div className="h-6 bg-slate-200 rounded w-3/4"></div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {notes.map((note) => (
-                  <div 
-                    key={note._id}
-                    onClick={() => { if(!generatingQuiz) { setActiveNote(note); setStudyMode(false); } }}
-                    className={`bg-white border rounded-2xl p-5 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between ${activeNote?._id === note._id ? 'ring-2 ring-indigo-500 border-transparent shadow-sm' : 'border-slate-200/70'}`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <span className="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-lg">Sem {note.semester}</span>
-                        <span className="text-xs text-slate-400 font-medium truncate max-w-[120px]">{note.subject}</span>
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[1,2,3,4].map((n) => (
+                    <div key={n} className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4 animate-pulse">
+                      <div className="h-4 bg-slate-200 rounded w-1/3"></div>
+                      <div className="h-6 bg-slate-200 rounded w-3/4"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {notes.map((note) => (
+                    <div 
+                      key={note._id}
+                      onClick={() => { if(!generatingQuiz) { setActiveNote(note); setStudyMode(false); } }}
+                      className={`bg-white border rounded-2xl p-5 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between ${activeNote?._id === note._id ? 'ring-2 ring-indigo-500 border-transparent shadow-sm' : 'border-slate-200/70'}`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <span className="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-lg">Sem {note.semester}</span>
+                          <span className="text-xs text-slate-400 font-medium truncate max-w-[120px]">{note.subject}</span>
+                        </div>
+                        <h3 className="font-bold text-slate-900 group-hover:text-indigo-600 transition truncate text-base mb-1">{note.title}</h3>
+                        <p className="text-slate-500 text-xs line-clamp-2 mb-4">{note.description || "No supplemental details provided."}</p>
                       </div>
-                      <h3 className="font-bold text-slate-900 group-hover:text-indigo-600 transition truncate text-base mb-1">{note.title}</h3>
-                      <p className="text-slate-500 text-xs line-clamp-2 mb-4">{note.description || "No supplemental details provided."}</p>
+                      <div className="pt-3 border-t border-slate-50 flex items-center justify-between text-xs text-slate-400">
+                        <span>By {note.uploadedBy?.name || "Peer Contributor"}</span>
+                        <span className="text-indigo-600 font-semibold group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                          View Workspace <ArrowRight size={14}/>
+                        </span>
+                      </div>
                     </div>
-                    <div className="pt-3 border-t border-slate-50 flex items-center justify-between text-xs text-slate-400">
-                      <span>By {note.uploadedBy?.name || "Peer Contributor"}</span>
-                      <span className="text-indigo-600 font-semibold group-hover:translate-x-1 transition-transform flex items-center gap-1">
-                        View Workspace <ArrowRight size={14}/>
-                      </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* NEW: Student Requests Panel Tab UI */}
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 mb-6">
+                <ClipboardList className="text-emerald-600" size={20}/>
+                Your Submitted Demands & Requests Tracking
+              </h2>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {requests.map((req) => {
+                  const isFulfilled = req.status === 'fulfilled';
+                  return (
+                    <div 
+                      key={req._id}
+                      className={`bg-white border rounded-2xl p-5 shadow-xs transition duration-200 relative overflow-hidden ${
+                        isFulfilled ? 'border-emerald-200 bg-emerald-50/10' : 'border-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                          Semester {req.semester}
+                        </span>
+                        {isFulfilled ? (
+                          <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-100 animate-fade-in">
+                            <CheckCircle2 size={12} /> Fulfilled
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-100">
+                            Pending Help
+                          </span>
+                        )}
+                      </div>
+
+                      <h4 className="font-bold text-slate-800 text-sm leading-snug">{req.title}</h4>
+                      <p className="text-[11px] font-semibold text-indigo-600 mt-0.5 mb-2">{req.subject}</p>
+                      <p className="text-xs text-slate-400 line-clamp-2 mb-4">{req.description}</p>
+
+                      {/* The beautiful design condition that renders the note dynamically under that request card */}
+                      {isFulfilled && req.fulfilledNote && (
+                        <div className="mt-3 p-3 bg-white border border-emerald-100 rounded-xl flex items-center justify-between shadow-xs">
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <BookOpen className="text-emerald-600 shrink-0" size={16} />
+                            <div className="overflow-hidden">
+                              <p className="text-xs font-bold text-slate-800 truncate">{req.fulfilledNote.title}</p>
+                              <p className="text-[10px] text-slate-400 truncate">Uploaded by Specialist</p>
+                            </div>
+                          </div>
+                          <a 
+                            href={req.fulfilledNote.files?.[0]} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="p-1.5 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition shrink-0"
+                          >
+                            <ExternalLink size={12} />
+                          </a>
+                        </div>
+                      )}
+
+                      {/* Instant Private Message Trigger */}
+                      {isFulfilled && req.fulfilledBy && (
+                        <button
+                          onClick={() => setActiveChatUser({ id: req.fulfilledBy!._id, name: req.fulfilledBy!.name })}
+                          className="w-full mt-4 flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-xl transition-all"
+                        >
+                          <MessageSquare size={12} /> Chat with Specialist
+                        </button>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+
+                {requests.length === 0 && (
+                  <p className="text-xs text-slate-400 col-span-2 py-4">No active requests logged in your tracking history.</p>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Right Column: Active Split-Workspace Pane */}
@@ -405,6 +527,20 @@ export default function Dashboard() {
 
         </div>
       </main>
+
+      {/* Real-World Messenger Inbox Modal Overlay layer */}
+      {activeChatUser && (
+        <PrivateChatModal 
+          userId={activeChatUser.id}               // Reverted back to .id since your TS type uses it
+          recipientName={activeChatUser.name}       // Matches the modal's expected name
+          onClose={() => setActiveChatUser(null)} 
+          currentUser={{
+          // FIX: Dynamically falls back to localStorage or token decoding if your auth state isn't in scope
+          id: localStorage.getItem('userId') || '' 
+          }}
+        />
+      )}
+      
     </div>
   );
 }

@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Upload from './pages/Upload';
 import Dashboard from './pages/student/Dashboard';
+import StudentExperts from './pages/StudentExperts'; // NEW: Imported the expert specialist directory page
 import ExpertDashboard from './pages/expert/ExpertDashboard'; 
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import Requests from './pages/Requests';
@@ -69,6 +70,16 @@ export default function App() {
             element={
               <PrivateRoute allowedRoles={['student']}>
                 <Dashboard />
+              </PrivateRoute>
+            } 
+          />
+
+          {/* NEW: Explicit private path linking up your customized Student Expert Chat Matrix */}
+          <Route 
+            path="/experts" 
+            element={
+              <PrivateRoute allowedRoles={['student', 'admin']}>
+                <StudentExperts />
               </PrivateRoute>
             } 
           />
