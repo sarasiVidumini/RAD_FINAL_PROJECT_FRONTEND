@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import API from '../../lib/api';
 import { Note } from '../../types';
 import NoteCard from '../../components/NoteCard';
@@ -16,7 +16,9 @@ import {
   Sparkles,
   Trash2,
   Edit3,
-  X
+  X,
+  Send,
+  User
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -32,11 +34,32 @@ interface NoteRequest {
   createdAt: string;
 }
 
+interface Message {
+  _id: string;
+  senderId: string;
+  senderModel: 'Student' | 'Expert';
+  text: string;
+  createdAt: string;
+}
+
+interface ChatThread {
+  _id: string;
+  student: { _id: string; name: string; email: string };
+  messages: Message[];
+  updatedAt: string;
+}
+
 export default function ExpertDashboard() {
   const [expertNotes, setExpertNotes] = useState<Note[]>([]);
   const [requests, setRequests] = useState<NoteRequest[]>([]);
+  const [chats, setChats] = useState<ChatThread[]>([]);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   // State management for updating notes
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -48,12 +71,14 @@ export default function ExpertDashboard() {
 
   const loadDashboardData = async () => {
     try {
-      const [notesRes, requestsRes] = await Promise.all([
+      const [notesRes, requestsRes, chatsRes] = await Promise.all([
         API.get('/notes/my'),
-        API.get('/requests')
+        API.get('/requests'),
+        API.get('/chats')
       ]);
-      setExpertNotes(notesRes.data);
+      setExpertNotes(notesRes.data || []);
       setRequests(requestsRes.data?.slice(0, 3) || []);
+      setChats(chatsRes.data || []);
     } catch (error) {
       toast.error("Failed to synchronize system terminal logs");
     } finally {
@@ -64,6 +89,11 @@ export default function ExpertDashboard() {
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  // Auto-scroll inside real-time chat containers on selection shifts
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [activeChatId, chats]);
 
   // Handle Note Deletion
   const handleDeleteNote = async (noteId: string) => {
@@ -104,8 +134,13 @@ export default function ExpertDashboard() {
       const res = await API.put(`/notes/${editingNote._id}`, updatedData);
       toast.success("Academic resource updated successfully");
       
-      // Update local state matrix smoothly
-      setExpertNotes(prev => prev.map(note => note._id === editingNote._id ? { ...note, ...res.data } : note));
+      setExpertNotes(prev => 
+        prev.map(note => 
+          note._id === editingNote._id 
+            ? { ...note, ...res.data } 
+            : note
+        )
+      );
       setEditingNote(null);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to modify configuration details");
@@ -113,6 +148,37 @@ export default function ExpertDashboard() {
       setIsUpdating(false);
     }
   };
+
+  // Dispatch replies inside student workspace
+  const handleSendReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // ✅ DEFENSIVE CHECK: Prevents firing network calls with a broken context key
+    if (!activeChatId || activeChatId === 'undefined' || !replyText.trim()) {
+      toast.error("Unable to send: Missing active thread configuration sequence.");
+      return;
+    }
+
+    setSendingMessage(true);
+    try {
+      const res = await API.post(`/chats/${activeChatId}/messages`, { text: replyText });
+      
+      setChats(prevChats => 
+        prevChats.map(chat => 
+          chat._id === activeChatId 
+            ? { ...chat, messages: [...chat.messages, res.data] } 
+            : chat
+        )
+      );
+      setReplyText('');
+    } catch (error) {
+      toast.error("Failed to transmit system messaging sequence");
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const currentChat = chats.find(c => c._id === activeChatId);
 
   if (loading) {
     return (
@@ -166,10 +232,10 @@ export default function ExpertDashboard() {
 
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Fulfillment Index</p>
-            <h3 className="text-3xl font-black text-gray-800 mt-1">{expertNotes.length > 0 ? '94%' : 'N/A'}</h3>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Inquiries</p>
+            <h3 className="text-3xl font-black text-gray-800 mt-1">{chats.length}</h3>
           </div>
-          <div className="p-3 bg-blue-50 rounded-xl text-blue-600"><TrendingUp size={24} /></div>
+          <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600"><MessageSquare size={24} /></div>
         </div>
 
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
@@ -184,100 +250,225 @@ export default function ExpertDashboard() {
       {/* Main Grid Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
         
-        {/* Publications Panel */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex justify-between items-center border-b border-gray-200 pb-4">
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-              <BookOpen size={22} className="text-gray-500" /> Your Academic Publications
-            </h2>
-            <span className="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-1 rounded-full">{expertNotes.length} Published</span>
-          </div>
-
-          {expertNotes.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200 p-8 shadow-xs">
-              <Award size={48} className="mx-auto text-gray-300 mb-4" />
-              <h3 className="text-lg font-bold text-gray-700">No verified logs found</h3>
-              <p className="text-gray-500 max-w-sm mx-auto mt-2 text-sm">Publish verified articles or reference material blueprints to populate the student ecosystem feeds.</p>
-              <Link to="/upload" className="inline-block mt-5 bg-emerald-600 text-white text-sm px-6 py-2.5 rounded-xl hover:bg-emerald-700 transition font-semibold shadow-xs">
-                Upload First Reference Note
-              </Link>
+        {/* Left/Middle Column Components: Publications & Live Student Demands */}
+        <div className="lg:col-span-2 space-y-10">
+          
+          {/* Publications Panel */}
+          <div className="space-y-6">
+            <div className="flex justify-between items-center border-b border-gray-200 pb-4">
+              <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                <BookOpen size={22} className="text-gray-500" /> Your Academic Publications
+              </h2>
+              <span className="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-1 rounded-full">{expertNotes.length} Published</span>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {expertNotes.map(note => (
-                <div key={note._id} className="relative group bg-white border border-gray-100 rounded-2xl p-2 shadow-xs hover:shadow-md transition duration-200">
-                  <NoteCard note={note} />
-                  
-                  {/* Neatly placed Absolute Action Tray inside Card Boundary */}
-                  <div className="mt-3 border-t border-gray-50 pt-3 px-3 pb-2 flex items-center justify-end gap-2">
-                    <button 
-                      onClick={() => openEditModal(note)}
-                      className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
-                    >
-                      <Edit3 size={13} /> Edit
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteNote(note._id)}
-                      className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-rose-600 bg-gray-50 hover:bg-rose-50 px-3 py-1.5 rounded-lg transition-colors"
-                    >
-                      <Trash2 size={13} /> Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Live Student Demands */}
-        <div className="space-y-6">
-          <div className="flex justify-between items-center border-b border-gray-200 pb-4">
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-              <MessageSquare size={22} className="text-amber-500" /> Live Student Demands
-            </h2>
-            <Link to="/requests" className="text-emerald-600 hover:text-emerald-700 font-bold text-xs flex items-center gap-1 transition">
-              View All <ArrowRight size={14} />
-            </Link>
-          </div>
-
-          <div className="space-y-4">
-            {requests.length === 0 ? (
-              <div className="bg-white border border-gray-100 rounded-2xl p-6 text-center shadow-xs">
-                <p className="text-sm text-gray-500">No active curated request lists matching your discipline domain tags at this moment.</p>
+            {expertNotes.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200 p-8 shadow-xs">
+                <Award size={48} className="mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-bold text-gray-700">No verified logs found</h3>
+                <p className="text-gray-500 max-w-sm mx-auto mt-2 text-sm">Publish verified articles or reference material blueprints to populate the student ecosystem feeds.</p>
+                <Link to="/upload" className="inline-block mt-5 bg-emerald-600 text-white text-sm px-6 py-2.5 rounded-xl hover:bg-emerald-700 transition font-semibold shadow-xs">
+                  Upload First Reference Note
+                </Link>
               </div>
             ) : (
-              requests.map((req) => (
-                <div key={req._id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs hover:shadow-md transition duration-200">
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="bg-amber-50 text-amber-800 text-xs font-bold px-2.5 py-0.5 rounded-md border border-amber-100">
-                      Sem {req.semester || '1'}
-                    </span>
-                    <span className="text-xs font-medium text-gray-400">
-                      {req.createdAt ? new Date(req.createdAt).toLocaleDateString() : 'Recent'}
-                    </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {expertNotes.map(note => (
+                  <div key={note._id} className="relative group bg-white border border-gray-100 rounded-2xl p-2 shadow-xs hover:shadow-md transition duration-200">
+                    <NoteCard note={note} />
+                    
+                    <div className="mt-3 border-t border-gray-50 pt-3 px-3 pb-2 flex items-center justify-end gap-2">
+                      <button 
+                        onClick={() => openEditModal(note)}
+                        className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        <Edit3 size={13} /> Edit
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteNote(note._id)}
+                        className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-rose-600 bg-gray-50 hover:bg-rose-50 px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={13} /> Delete
+                      </button>
+                    </div>
                   </div>
-                  <h4 className="font-bold text-gray-800 text-base leading-tight hover:text-emerald-600 cursor-pointer transition">
-                    {req.title}
-                  </h4>
-                  <p className="text-xs font-semibold text-emerald-600 mt-1 mb-2">{req.subject}</p>
-                  <p className="text-xs text-gray-500 line-clamp-2 mb-4 bg-gray-50 p-2.5 rounded-lg">
-                    {req.description || "No description provided."}
-                  </p>
-
-                  <Link 
-                    to={`/upload?request_id=${req._id}&subject=${encodeURIComponent(req.subject)}`}
-                    className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-slate-800 transition"
-                  >
-                    Fulfill This Request
-                  </Link>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
 
+          {/* Live Student Demands Block */}
+          <div className="space-y-6">
+            <div className="flex justify-between items-center border-b border-gray-200 pb-4">
+              <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                <Clock size={22} className="text-amber-500" /> Live Student Demands
+              </h2>
+              <Link to="/requests" className="text-emerald-600 hover:text-emerald-700 font-bold text-xs flex items-center gap-1 transition">
+                View All <ArrowRight size={14} />
+              </Link>
+            </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {requests.length === 0 ? (
+                <div className="col-span-2 bg-white border border-gray-100 rounded-2xl p-6 text-center shadow-xs">
+                  <p className="text-sm text-gray-500">No active curated request lists matching your discipline domain tags at this moment.</p>
+                </div>
+              ) : (
+                requests.map((req) => (
+                  <div key={req._id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs hover:shadow-md transition duration-200 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="bg-amber-50 text-amber-800 text-xs font-bold px-2.5 py-0.5 rounded-md border border-amber-100">
+                          Sem {req.semester || '1'}
+                        </span>
+                        <span className="text-xs font-medium text-gray-400">
+                          {req.createdAt ? new Date(req.createdAt).toLocaleDateString() : 'Recent'}
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-gray-800 text-base leading-tight hover:text-emerald-600 cursor-pointer transition">
+                        {req.title}
+                      </h4>
+                      <p className="text-xs font-semibold text-emerald-600 mt-1 mb-2">{req.subject}</p>
+                      <p className="text-xs text-gray-500 line-clamp-2 mb-4 bg-gray-50 p-2.5 rounded-lg">
+                        {req.description || "No description provided."}
+                      </p>
+                    </div>
+
+                    <Link 
+                      to={`/upload?request_id=${req._id}&subject=${encodeURIComponent(req.subject)}`}
+                      className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-slate-800 transition"
+                    >
+                      Fulfill This Request
+                    </Link>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Right Column: Real-Time Interactive Inbox Terminal Layout */}
+        <div className="lg:col-span-1 sticky top-6 space-y-6">
+          <div className="flex justify-between items-center border-b border-gray-200 pb-4">
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+              <MessageSquare size={22} className="text-indigo-600" /> Private Consultations
+            </h2>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden h-[540px] flex flex-col">
+            {!activeChatId ? (
+              /* Threads View Matrix */
+              <div className="flex-grow flex flex-col overflow-hidden">
+                <div className="p-4 bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Incoming Active Channels ({chats.length})
+                </div>
+                
+                <div className="flex-grow overflow-y-auto divide-y divide-slate-100">
+                  {chats.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+                      <MessageSquare className="text-slate-200 mb-2" size={40} />
+                      <p className="text-xs text-slate-400 font-medium">No active communications found.</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Students messaging you privately will appear here.</p>
+                    </div>
+                  ) : (
+                    chats.map(chat => {
+                      const lastMsg = chat.messages[chat.messages.length - 1];
+                      return (
+                        <div 
+                          key={chat._id}
+                          onClick={() => setActiveChatId(chat._id)}
+                          className="p-4 hover:bg-indigo-50/30 transition cursor-pointer flex items-start gap-3 group"
+                        >
+                          <div className="p-2 bg-slate-100 text-slate-600 rounded-xl group-hover:bg-indigo-100 group-hover:text-indigo-600 transition">
+                            <User size={16} />
+                          </div>
+                          <div className="flex-grow overflow-hidden">
+                            <div className="flex justify-between items-baseline mb-0.5">
+                              <h4 className="text-sm font-bold text-slate-800 truncate">{chat.student?.name}</h4>
+                              <span className="text-[10px] text-slate-400">
+                                {chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString() : ''}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 truncate">
+                              {lastMsg ? `${lastMsg.senderModel === 'Expert' ? 'You: ' : ''}${lastMsg.text}` : 'Started a consultation.'}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* Inside Selected Chat Channel Terminal Panel */
+              <div className="flex-grow flex flex-col overflow-hidden">
+                <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <div className="p-1.5 bg-slate-800 text-indigo-400 rounded-lg shrink-0">
+                      <User size={14} />
+                    </div>
+                    <div className="overflow-hidden">
+                      <h4 className="text-xs font-bold truncate">{currentChat?.student?.name}</h4>
+                      <p className="text-[10px] text-slate-400 truncate">{currentChat?.student?.email}</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setActiveChatId(null)}
+                    className="p-1 hover:bg-slate-800 rounded-md text-slate-400 hover:text-white transition"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {/* Conversation History Matrix Panel */}
+                <div className="flex-grow overflow-y-auto bg-slate-50 p-4 space-y-3 flex flex-col">
+                  {currentChat?.messages.map((msg) => {
+                    const isExpert = msg.senderModel === 'Expert';
+                    return (
+                      <div 
+                        key={msg._id} 
+                        className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed shadow-2xs ${
+                          isExpert 
+                            ? 'bg-indigo-600 text-white font-medium self-end rounded-br-none' 
+                            : 'bg-white text-slate-800 border border-slate-200/60 self-start rounded-bl-none'
+                        }`}
+                      >
+                        <p>{msg.text}</p>
+                        <span className={`block text-[9px] mt-1 text-right ${isExpert ? 'text-indigo-200/80' : 'text-slate-400'}`}>
+                          {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  <div ref={chatEndRef} />
+                </div>
+
+                {/* Secure Message Transmission Bar */}
+                <form onSubmit={handleSendReply} className="p-3 bg-white border-t border-slate-100 flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Type professional advice..." 
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    disabled={sendingMessage}
+                    className="flex-grow bg-slate-50 border border-slate-200 rounded-xl px-3 text-xs focus:outline-hidden focus:border-indigo-500 focus:bg-white transition"
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={sendingMessage || !replyText.trim()}
+                    className="p-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition disabled:bg-slate-200 disabled:text-slate-400"
+                  >
+                    <Send size={14} />
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+
+          {/* Static Badging Accent */}
           <div className="bg-linear-to-br from-emerald-600 to-teal-700 rounded-2xl p-5 text-white shadow-md relative overflow-hidden">
-            
+
             <div className="absolute right-[-20px] bottom-[-20px] opacity-10">
               <Award size={140} />
             </div>
