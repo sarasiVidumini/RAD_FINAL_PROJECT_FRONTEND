@@ -37,101 +37,113 @@ export default function NoteCard({ note, onUpdate, showActions = false }: NoteCa
   };
 
   return (
-    <div className="group bg-zinc-900 border border-white/10 rounded-3xl overflow-hidden hover:border-violet-500/50 hover:-translate-y-2 transition-all duration-500 shadow-xl">
+    <div className="group bg-neutral-900 border border-neutral-800 rounded-3xl overflow-hidden hover:border-amber-500/40 hover:-translate-y-2 transition-all duration-500 shadow-2xl hover:shadow-amber-500/[0.02] flex flex-col">
 
-      {/* Creative Gradient Header */}
-      <div className={`h-52 relative flex items-center justify-center overflow-hidden bg-gradient-to-br ${isPaper ? 'from-emerald-600 via-teal-600 to-cyan-600' : 'from-violet-600 via-purple-600 to-fuchsia-600'}`}>
-        <div className="absolute inset-0 bg-[radial-gradient(#ffffff20_1px,transparent_1px)] [background-size:30px_30px]"></div>
+      {/* Luxury Metallic Dark Grid Header */}
+      <div className={`h-52 relative flex items-center justify-center overflow-hidden bg-gradient-to-b ${isPaper ? 'from-neutral-800 via-neutral-900 to-neutral-950' : 'from-neutral-900 to-neutral-950'}`}>
+        {/* Abstract structural alignment lines */}
+        <div className="absolute inset-0 bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:24px_24px]"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-neutral-800 to-transparent"></div>
 
-        {/* Doc type badge */}
-        <span className="absolute top-4 left-4 z-10 flex items-center gap-1 bg-black/30 backdrop-blur-md border border-white/20 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full">
-          {isPaper ? <FileText size={11} /> : <NotebookText size={11} />}
-          {isPaper ? 'Paper' : 'Note'}
+        {/* Premium Document Type Badge */}
+        <span className={`absolute top-4 left-4 z-10 flex items-center gap-1.5 backdrop-blur-md border px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all duration-300 ${
+          isPaper 
+            ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.05)]' 
+            : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
+        }`}>
+          {isPaper ? <FileText size={12} className="stroke-[2.5]" /> : <NotebookText size={12} className="stroke-[2.5]" />}
+          {isPaper ? 'Research Paper' : 'Lecture Note'}
         </span>
 
+        {/* Central Graphic Container */}
         <div className="relative z-10 text-center">
-          <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/20">
-            <BookOpen size={48} className="text-white" />
+          <div className="w-20 h-20 bg-neutral-950/80 border border-neutral-800 group-hover:border-amber-500/30 rounded-2xl flex items-center justify-center mx-auto mb-3 transition-all duration-300 shadow-xl group-hover:shadow-amber-500/[0.03]">
+            <BookOpen size={34} className="text-amber-500 group-hover:scale-110 transition-transform duration-300 stroke-[1.8]" />
           </div>
-          <p className="text-white/90 text-sm font-mono tracking-widest">SEM {note.semester} · {note.subjectCode}</p>
+          <p className="text-neutral-500 text-[11px] font-mono font-semibold tracking-widest uppercase">
+            SEM 0{note.semester} <span className="text-neutral-700">·</span> {note.subjectCode || 'GEN-CORE'}
+          </p>
         </div>
 
-        {/* Action Buttons */}
+        {/* Floating Context Control Actions */}
         {showActions && (
-          <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <div className="absolute top-4 right-4 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
             <button
               onClick={() => toast('Edit functionality coming soon!')}
-              className="bg-zinc-900/80 hover:bg-zinc-800 p-3 rounded-2xl backdrop-blur-md border border-white/10 text-white hover:text-violet-400 transition"
+              className="bg-neutral-950 border border-neutral-800 hover:border-amber-500/30 p-2.5 rounded-xl text-neutral-400 hover:text-amber-400 transition-all duration-200 shadow-lg"
+              title="Edit Publication"
             >
-              <Edit2 size={18} />
+              <Edit2 size={15} />
             </button>
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="bg-zinc-900/80 hover:bg-zinc-800 p-3 rounded-2xl backdrop-blur-md border border-white/10 text-white hover:text-red-400 transition"
+              className="bg-neutral-950 border border-neutral-800 hover:border-red-500/30 p-2.5 rounded-xl text-neutral-400 hover:text-red-500 transition-all duration-200 shadow-lg"
+              title="Delete Publication"
             >
-              <Trash2 size={18} />
+              <Trash2 size={15} />
             </button>
           </div>
         )}
       </div>
 
-      {/* Content Area */}
-      <div className="p-7">
+      {/* Component Core Detail Bounds */}
+      <div className="p-6 flex-1 flex flex-col justify-between bg-neutral-900/40">
         <div className="mb-4">
-          <p className="text-violet-400 text-sm font-medium tracking-wide">{note.subject}</p>
-          <h3 className="font-semibold text-2xl text-white line-clamp-2 leading-tight mt-2 group-hover:text-violet-300 transition-colors">
+          <p className="text-amber-500 text-xs font-bold tracking-wider uppercase mb-1.5">{note.subject}</p>
+          <h3 className="font-bold text-xl text-white line-clamp-2 leading-snug tracking-tight group-hover:text-amber-400 transition-colors duration-300">
             {note.title}
           </h3>
         </div>
 
-        {/* Uploader info */}
-        <div className="flex items-center justify-between text-xs mb-4 text-slate-400">
-          <span>
-            Uploaded by <strong className="text-slate-200 font-semibold">{note.uploadedBy?.name || 'Unknown'}</strong>
-          </span>
-          <span className="font-mono">
-            {new Date(note.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-            {' · '}
-            {new Date(note.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        </div>
-
-        {/* Rating & Stats */}
-        <div className="flex items-center justify-between text-sm mb-6">
-          <div className="flex items-center gap-2 text-yellow-400">
-            <Star className="fill-current" size={18} />
-            <span className="font-medium">{note.averageRating?.toFixed(1) || '4.8'}</span>
+        <div>
+          {/* Uploader Meta Track */}
+          <div className="flex items-center justify-between text-xs mb-4 text-neutral-500 border-t border-neutral-800/60 pt-4">
+            <span className="truncate max-w-[55%]">
+              By <strong className="text-neutral-300 font-semibold">{note.uploadedBy?.name || 'Academic Vault'}</strong>
+            </span>
+            <span className="font-mono text-[11px] shrink-0 text-neutral-600">
+              {new Date(note.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+            </span>
           </div>
-          <div className="text-slate-400 text-sm font-mono">
-            {note.downloads || 0} downloads
-          </div>
-        </div>
 
-        {/* Download Buttons */}
-        <div className="space-y-3">
-          {note.files && note.files.length > 0 ? (
-            note.files.map((file, i) => (
+          {/* Social Proof metrics */}
+          <div className="flex items-center justify-between text-xs mb-5 bg-neutral-950/40 border border-neutral-800/40 rounded-xl px-4 py-2.5">
+            <div className="flex items-center gap-1.5 text-amber-400">
+              <Star className="fill-current text-amber-500" size={14} />
+              <span className="font-bold text-neutral-200">{note.averageRating?.toFixed(1) || '4.8'}</span>
+            </div>
+            <div className="text-neutral-500 font-mono text-[11px]">
+              <span className="text-neutral-300 font-semibold">{note.downloads || 0}</span> system downloads
+            </div>
+          </div>
+
+          {/* Core Access Terminals (Downloads) */}
+          <div className="space-y-2">
+            {note.files && note.files.length > 0 ? (
+              note.files.map((file, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleDownload(file)}
+                  className="w-full flex items-center justify-center gap-2 bg-neutral-950 hover:bg-amber-500 border border-neutral-800 hover:border-amber-400 py-3 rounded-xl text-xs font-bold text-neutral-300 hover:text-black transition-all duration-300 active:scale-[0.985] shadow-md hover:shadow-amber-500/10 tracking-wide"
+                >
+                  <Download size={16} className="stroke-[2.5]" />
+                  DOWNLOAD TERMINAL {note.files.length > 1 ? `#0${i + 1}` : ''}
+                </button>
+              ))
+            ) : (
               <button
-                key={i}
-                onClick={() => handleDownload(file)}
-                className="w-full flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-violet-500 py-4 rounded-2xl text-sm font-medium transition-all active:scale-[0.985]"
+                onClick={() => toast('No files attached to this note', {
+                  icon: '📭',
+                  duration: 2500
+                })}
+                className="w-full py-3 bg-neutral-950/40 border border-neutral-800/40 rounded-xl text-xs font-bold text-neutral-600 cursor-not-allowed transition"
+                disabled
               >
-                <Download size={20} />
-                Download File {note.files.length > 1 ? `#${i + 1}` : ''}
+                NO ATTACHMENTS RECOVERED
               </button>
-            ))
-          ) : (
-            <button
-              onClick={() => toast('No files attached to this note', {
-                icon: '📭',
-                duration: 2500
-              })}
-              className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-medium text-slate-400 cursor-not-allowed hover:bg-white/10 transition"
-            >
-              No files available
-            </button>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
