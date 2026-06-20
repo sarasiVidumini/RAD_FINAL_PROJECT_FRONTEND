@@ -1,17 +1,20 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { BookOpen, Upload, LayoutDashboard, MessageSquare, Shield, LogOut } from 'lucide-react';
+import { 
+  BookOpen, Upload, LayoutDashboard, 
+  MessageSquare, Shield, LogOut, User 
+} from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Guard against unauthenticated sessions attempting to cross protected paths
+  // Guard against unauthenticated sessions
   useEffect(() => {
     const protectedPaths = ['/dashboard', '/upload', '/requests', '/admin'];
-    const token = localStorage.getItem('token'); // Adjust key name to match your auth slice storage
+    const token = localStorage.getItem('token');
     
     if (protectedPaths.includes(location.pathname) && !user && !token) {
       navigate('/login', { replace: true });
@@ -23,87 +26,104 @@ export default function Navbar() {
     navigate('/login', { replace: true });
   };
 
-  // Determine administrative status based on credentials and designated service account mapping
   const isSystemAdmin = user?.role === 'admin' || user?.email === 'admin@college.edu';
 
   return (
-    <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
+    <nav className="bg-zinc-950 border-b border-white/10 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-3 text-2xl font-bold text-indigo-600">
-          <BookOpen size={32} />
+        {/* Logo */}
+        <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-3 text-2xl font-bold text-white">
+          <BookOpen size={32} className="text-violet-400" />
           NoteVault
         </Link>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-8">
           {user ? (
             <>
+              {/* Navigation Links with Icons */}
               <Link 
                 to="/dashboard" 
-                className={`flex items-center gap-2 transition ${
-                  location.pathname === '/dashboard' ? 'text-indigo-600 font-semibold' : 'text-gray-700 hover:text-indigo-600'
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all ${
+                  location.pathname === '/dashboard' 
+                    ? 'bg-violet-600 text-white' 
+                    : 'text-slate-300 hover:bg-zinc-900 hover:text-white'
                 }`}
               >
-                <LayoutDashboard size={20} /> Dashboard
+                <LayoutDashboard size={20} />
+                <span className="font-medium">Dashboard</span>
               </Link>
 
               <Link 
                 to="/requests" 
-                className={`flex items-center gap-2 transition ${
-                  location.pathname === '/requests' ? 'text-indigo-600 font-semibold' : 'text-gray-700 hover:text-indigo-600'
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all ${
+                  location.pathname === '/requests' 
+                    ? 'bg-violet-600 text-white' 
+                    : 'text-slate-300 hover:bg-zinc-900 hover:text-white'
                 }`}
               >
-                <MessageSquare size={20} /> Requests
+                <MessageSquare size={20} />
+                <span className="font-medium">Requests</span>
               </Link>
 
               <Link 
                 to="/upload" 
-                className={`flex items-center gap-2 transition ${
-                  location.pathname === '/upload' ? 'text-indigo-600 font-semibold' : 'text-gray-700 hover:text-indigo-600'
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all ${
+                  location.pathname === '/upload' 
+                    ? 'bg-violet-600 text-white' 
+                    : 'text-slate-300 hover:bg-zinc-900 hover:text-white'
                 }`}
               >
-                <Upload size={20} /> Upload Notes
+                <Upload size={20} />
+                <span className="font-medium">Upload Notes</span>
               </Link>
 
               {isSystemAdmin && (
                 <Link 
                   to="/admin" 
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl transition font-medium ${
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all ${
                     location.pathname === '/admin' 
-                      ? 'bg-indigo-50 text-indigo-700' 
-                      : 'bg-red-50 text-red-700 hover:bg-red-100'
+                      ? 'bg-red-600 text-white' 
+                      : 'text-slate-300 hover:bg-zinc-900 hover:text-white'
                   }`}
                 >
-                  <Shield size={20} /> Admin Panel
+                  <Shield size={20} />
+                  <span className="font-medium">Admin Panel</span>
                 </Link>
               )}
 
-              <div className="h-5 w-[1px] bg-gray-200 self-center" />
+              <div className="h-6 w-px bg-white/10" />
 
+              {/* User Info & Logout */}
               <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900 truncate max-w-[120px]">{user.name}</p>
-                  <p className="text-xs text-gray-500 font-mono">
-                    {isSystemAdmin ? '👑 Systems Admin' : `Sem ${user.semester || 3}`}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-zinc-800 rounded-2xl flex items-center justify-center border border-white/10">
+                    <User size={20} className="text-slate-400" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-white truncate max-w-[140px]">{user.name}</p>
+                    <p className="text-xs text-slate-500 font-mono">
+                      {isSystemAdmin ? 'System Admin' : `Sem ${user.semester || 3}`}
+                    </p>
+                  </div>
                 </div>
 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 text-gray-500 hover:text-red-600 transition group p-1 rounded-lg hover:bg-gray-50"
-                  title="Logout Session"
+                  className="flex items-center gap-2 text-slate-400 hover:text-red-400 transition p-2 rounded-xl hover:bg-zinc-900"
+                  title="Logout"
                 >
-                  <LogOut size={20} className="group-hover:translate-x-0.5 transition-transform" />
+                  <LogOut size={20} />
                 </button>
               </div>
             </>
           ) : (
             <>
-              <Link to="/login" className="text-gray-700 hover:text-indigo-600 transition font-medium">
+              <Link to="/login" className="text-slate-300 hover:text-white transition font-medium">
                 Login
               </Link>
               <Link 
                 to="/register" 
-                className="bg-indigo-600 text-white px-6 py-2.5 rounded-2xl hover:bg-indigo-700 transition font-medium shadow-sm"
+                className="bg-violet-600 text-white px-6 py-2.5 rounded-2xl hover:bg-violet-700 transition font-medium"
               >
                 Register
               </Link>

@@ -1,5 +1,5 @@
-// frontend/components/NoteCard.tsx  (UPDATED WITH EDIT/DELETE)
-import { Download, Star, Edit2, Trash2 } from 'lucide-react';
+// frontend/components/NoteCard.tsx
+import { Download, Star, Edit2, Trash2, BookOpen, FileText, NotebookText } from 'lucide-react';
 import { Note } from '../types';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -7,15 +7,18 @@ import API from '../lib/api';
 
 interface NoteCardProps {
   note: Note;
-  onUpdate?: () => void;        // Refresh callback
-  showActions?: boolean;        // For expert dashboard
+  onUpdate?: () => void;
+  showActions?: boolean;
 }
 
 export default function NoteCard({ note, onUpdate, showActions = false }: NoteCardProps) {
   const [deleting, setDeleting] = useState(false);
+  const isPaper = note.docType === 'paper';
 
   const handleDownload = (fileUrl: string) => {
-    window.open(fileUrl, '_blank');
+    if (fileUrl) {
+      window.open(fileUrl, '_blank');
+    }
   };
 
   const handleDelete = async () => {
@@ -34,21 +37,38 @@ export default function NoteCard({ note, onUpdate, showActions = false }: NoteCa
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 group">
-      <div className="h-48 bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center relative">
-        <span className="text-white text-6xl">📄</span>
+    <div className="group bg-zinc-900 border border-white/10 rounded-3xl overflow-hidden hover:border-violet-500/50 hover:-translate-y-2 transition-all duration-500 shadow-xl">
+
+      {/* Creative Gradient Header */}
+      <div className={`h-52 relative flex items-center justify-center overflow-hidden bg-gradient-to-br ${isPaper ? 'from-emerald-600 via-teal-600 to-cyan-600' : 'from-violet-600 via-purple-600 to-fuchsia-600'}`}>
+        <div className="absolute inset-0 bg-[radial-gradient(#ffffff20_1px,transparent_1px)] [background-size:30px_30px]"></div>
+
+        {/* Doc type badge */}
+        <span className="absolute top-4 left-4 z-10 flex items-center gap-1 bg-black/30 backdrop-blur-md border border-white/20 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full">
+          {isPaper ? <FileText size={11} /> : <NotebookText size={11} />}
+          {isPaper ? 'Paper' : 'Note'}
+        </span>
+
+        <div className="relative z-10 text-center">
+          <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/20">
+            <BookOpen size={48} className="text-white" />
+          </div>
+          <p className="text-white/90 text-sm font-mono tracking-widest">SEM {note.semester} · {note.subjectCode}</p>
+        </div>
+
+        {/* Action Buttons */}
         {showActions && (
-          <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+          <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
             <button
-              onClick={() => {/* Will open edit modal */}}
-              className="bg-white/90 hover:bg-white p-2 rounded-full text-gray-700 hover:text-emerald-600 transition"
+              onClick={() => toast('Edit functionality coming soon!')}
+              className="bg-zinc-900/80 hover:bg-zinc-800 p-3 rounded-2xl backdrop-blur-md border border-white/10 text-white hover:text-violet-400 transition"
             >
               <Edit2 size={18} />
             </button>
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="bg-white/90 hover:bg-white p-2 rounded-full text-gray-700 hover:text-red-600 transition"
+              className="bg-zinc-900/80 hover:bg-zinc-800 p-3 rounded-2xl backdrop-blur-md border border-white/10 text-white hover:text-red-400 transition"
             >
               <Trash2 size={18} />
             </button>
@@ -56,27 +76,62 @@ export default function NoteCard({ note, onUpdate, showActions = false }: NoteCa
         )}
       </div>
 
-      <div className="p-6">
-        <h3 className="font-semibold text-xl mb-2 line-clamp-2">{note.title}</h3>
-        <p className="text-indigo-600 font-medium">{note.subject} • Sem {note.semester}</p>
-
-        <div className="flex items-center gap-2 mt-4 text-sm text-gray-500">
-          <Star className="text-yellow-500" fill="currentColor" size={18} />
-          <span>{note.averageRating.toFixed(1)}</span>
-          <span>•</span>
-          <span>{note.downloads} downloads</span>
+      {/* Content Area */}
+      <div className="p-7">
+        <div className="mb-4">
+          <p className="text-violet-400 text-sm font-medium tracking-wide">{note.subject}</p>
+          <h3 className="font-semibold text-2xl text-white line-clamp-2 leading-tight mt-2 group-hover:text-violet-300 transition-colors">
+            {note.title}
+          </h3>
         </div>
 
-        <div className="mt-6 flex gap-3">
-          {note.files.map((file, i) => (
+        {/* Uploader info */}
+        <div className="flex items-center justify-between text-xs mb-4 text-slate-400">
+          <span>
+            Uploaded by <strong className="text-slate-200 font-semibold">{note.uploadedBy?.name || 'Unknown'}</strong>
+          </span>
+          <span className="font-mono">
+            {new Date(note.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+            {' · '}
+            {new Date(note.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+
+        {/* Rating & Stats */}
+        <div className="flex items-center justify-between text-sm mb-6">
+          <div className="flex items-center gap-2 text-yellow-400">
+            <Star className="fill-current" size={18} />
+            <span className="font-medium">{note.averageRating?.toFixed(1) || '4.8'}</span>
+          </div>
+          <div className="text-slate-400 text-sm font-mono">
+            {note.downloads || 0} downloads
+          </div>
+        </div>
+
+        {/* Download Buttons */}
+        <div className="space-y-3">
+          {note.files && note.files.length > 0 ? (
+            note.files.map((file, i) => (
+              <button
+                key={i}
+                onClick={() => handleDownload(file)}
+                className="w-full flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-violet-500 py-4 rounded-2xl text-sm font-medium transition-all active:scale-[0.985]"
+              >
+                <Download size={20} />
+                Download File {note.files.length > 1 ? `#${i + 1}` : ''}
+              </button>
+            ))
+          ) : (
             <button
-              key={i}
-              onClick={() => handleDownload(file)}
-              className="flex-1 bg-gray-900 text-white py-3 rounded-2xl hover:bg-black transition flex items-center justify-center gap-2"
+              onClick={() => toast('No files attached to this note', {
+                icon: '📭',
+                duration: 2500
+              })}
+              className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-medium text-slate-400 cursor-not-allowed hover:bg-white/10 transition"
             >
-              <Download size={18} /> Download
+              No files available
             </button>
-          ))}
+          )}
         </div>
       </div>
     </div>

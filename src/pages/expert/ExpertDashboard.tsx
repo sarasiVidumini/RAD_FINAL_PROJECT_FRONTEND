@@ -18,9 +18,10 @@ import {
   Edit3,
   X,
   Send,
-  User
+  User,
+  CheckCircle2
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
 
@@ -30,7 +31,10 @@ interface NoteRequest {
   subject: string;
   semester: string;
   description: string;
+  status: 'open' | 'fulfilled';
   requestedBy: { name: string };
+  fulfilledBy?: { _id: string; name: string };
+  fulfilledNote?: { _id: string; title: string };
   createdAt: string;
 }
 
@@ -61,7 +65,7 @@ export default function ExpertDashboard() {
   
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
-  // State management for updating notes
+
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [updateTitle, setUpdateTitle] = useState('');
   const [updateSubject, setUpdateSubject] = useState('');
@@ -90,12 +94,12 @@ export default function ExpertDashboard() {
     loadDashboardData();
   }, []);
 
-  // Auto-scroll inside real-time chat containers on selection shifts
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeChatId, chats]);
 
-  // Handle Note Deletion
+
   const handleDeleteNote = async (noteId: string) => {
     if (!window.confirm("Are you sure you want to permanently delete this academic publication?")) return;
     
@@ -108,7 +112,7 @@ export default function ExpertDashboard() {
     }
   };
 
-  // Open Edit Modal with populated data
+
   const openEditModal = (note: Note) => {
     setEditingNote(note);
     setUpdateTitle(note.title);
@@ -117,7 +121,7 @@ export default function ExpertDashboard() {
     setUpdateDescription(note.description || '');
   };
 
-  // Handle Note Update Submission
+
   const handleUpdateNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingNote) return;
@@ -136,9 +140,7 @@ export default function ExpertDashboard() {
       
       setExpertNotes(prev => 
         prev.map(note => 
-          note._id === editingNote._id 
-            ? { ...note, ...res.data } 
-            : note
+          note._id === editingNote._id ? { ...note, ...res.data } : note
         )
       );
       setEditingNote(null);
@@ -149,11 +151,11 @@ export default function ExpertDashboard() {
     }
   };
 
-  // Dispatch replies inside student workspace
+
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // ✅ DEFENSIVE CHECK: Prevents firing network calls with a broken context key
+
     if (!activeChatId || activeChatId === 'undefined' || !replyText.trim()) {
       toast.error("Unable to send: Missing active thread configuration sequence.");
       return;
@@ -162,12 +164,10 @@ export default function ExpertDashboard() {
     setSendingMessage(true);
     try {
       const res = await API.post(`/chats/${activeChatId}/messages`, { text: replyText });
-      
+
       setChats(prevChats => 
         prevChats.map(chat => 
-          chat._id === activeChatId 
-            ? { ...chat, messages: [...chat.messages, res.data] } 
-            : chat
+          chat._id === activeChatId ? { ...chat, messages: [...chat.messages, res.data] } : chat
         )
       );
       setReplyText('');
@@ -182,303 +182,248 @@ export default function ExpertDashboard() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4"></div>
-        <div className="text-gray-500 font-medium tracking-wide">Synchronizing Expert Terminal Panel...</div>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] bg-zinc-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-500 mb-4"></div>
+        <div className="text-slate-400 font-medium tracking-wide">SYNCHRONIZING EXPERT TERMINAL...</div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10 bg-slate-50/50 min-h-screen">
-      
-      {/* Header Block */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
-        <div>
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
-            <Award className="text-emerald-600" size={40} /> Expert Hub Console
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Verified Domain Specialist: <span className="font-semibold text-emerald-600 underline decoration-2 underline-offset-4">{(user as any)?.expertise || 'Computer Science'}</span>
-          </p>
-        </div>
-
-        <Link
-          to="/upload"
-          className="flex items-center gap-3 bg-emerald-600 text-white px-6 py-3.5 rounded-xl hover:bg-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold text-sm tracking-wide"
-        >
-          <UploadCloud size={18} />
-          Publish Expert Resource
-        </Link>
-      </div>
-
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Publications</p>
-            <h3 className="text-3xl font-black text-gray-800 mt-1">{expertNotes.length}</h3>
-          </div>
-          <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600"><FileText size={24} /></div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pending Requests</p>
-            <h3 className="text-3xl font-black text-gray-800 mt-1">{requests.length}</h3>
-          </div>
-          <div className="p-3 bg-amber-50 rounded-xl text-amber-600"><Clock size={24} /></div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Inquiries</p>
-            <h3 className="text-3xl font-black text-gray-800 mt-1">{chats.length}</h3>
-          </div>
-          <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600"><MessageSquare size={24} /></div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Verification Badge</p>
-            <h3 className="text-sm font-bold text-emerald-700 mt-2 bg-emerald-50 px-2.5 py-1 rounded-md inline-block">Active Specialist</h3>
-          </div>
-          <div className="p-3 bg-purple-50 rounded-xl text-purple-600"><Sparkles size={24} /></div>
-        </div>
-      </div>
-
-      {/* Main Grid Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
+    <div className="min-h-screen bg-zinc-950 text-slate-200 pb-20">
+      <div className="max-w-7xl mx-auto px-6 py-10">
         
-        {/* Left/Middle Column Components: Publications & Live Student Demands */}
-        <div className="lg:col-span-2 space-y-10">
-          
-          {/* Publications Panel */}
-          <div className="space-y-6">
-            <div className="flex justify-between items-center border-b border-gray-200 pb-4">
-              <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                <BookOpen size={22} className="text-gray-500" /> Your Academic Publications
-              </h2>
-              <span className="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-1 rounded-full">{expertNotes.length} Published</span>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+          <div>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-2xl flex items-center justify-center">
+                <Award size={28} className="text-white" />
+              </div>
+              <div>
+                <h1 className="text-5xl font-black tracking-tighter bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                  Expert Hub
+                </h1>
+                <p className="text-slate-400 mt-1">Verified Knowledge Architect Console</p>
+              </div>
             </div>
-
-            {expertNotes.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200 p-8 shadow-xs">
-                <Award size={48} className="mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-bold text-gray-700">No verified logs found</h3>
-                <p className="text-gray-500 max-w-sm mx-auto mt-2 text-sm">Publish verified articles or reference material blueprints to populate the student ecosystem feeds.</p>
-                <Link to="/upload" className="inline-block mt-5 bg-emerald-600 text-white text-sm px-6 py-2.5 rounded-xl hover:bg-emerald-700 transition font-semibold shadow-xs">
-                  Upload First Reference Note
-                </Link>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {expertNotes.map(note => (
-                  <div key={note._id} className="relative group bg-white border border-gray-100 rounded-2xl p-2 shadow-xs hover:shadow-md transition duration-200">
-                    <NoteCard note={note} />
-                    
-                    <div className="mt-3 border-t border-gray-50 pt-3 px-3 pb-2 flex items-center justify-end gap-2">
-                      <button 
-                        onClick={() => openEditModal(note)}
-                        className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        <Edit3 size={13} /> Edit
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteNote(note._id)}
-                        className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-rose-600 bg-gray-50 hover:bg-rose-50 px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        <Trash2 size={13} /> Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* Live Student Demands Block */}
-          <div className="space-y-6">
-            <div className="flex justify-between items-center border-b border-gray-200 pb-4">
-              <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                <Clock size={22} className="text-amber-500" /> Live Student Demands
-              </h2>
-              <Link to="/requests" className="text-emerald-600 hover:text-emerald-700 font-bold text-xs flex items-center gap-1 transition">
-                View All <ArrowRight size={14} />
-              </Link>
-            </div>
+          <RouterLink
+            to="/upload"
+            className="flex items-center gap-3 bg-white text-black px-8 py-4 rounded-2xl hover:bg-white/90 transition-all font-semibold shadow-xl shadow-violet-500/20"
+          >
+            <UploadCloud size={20} />
+            PUBLISH NEW RESOURCE
+          </RouterLink>
+        </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {requests.length === 0 ? (
-                <div className="col-span-2 bg-white border border-gray-100 rounded-2xl p-6 text-center shadow-xs">
-                  <p className="text-sm text-gray-500">No active curated request lists matching your discipline domain tags at this moment.</p>
+        {/* Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {[
+            { label: "Publications", value: expertNotes.length, icon: FileText, color: "violet" },
+            { label: "Open Requests", value: requests.filter(r => r.status !== 'fulfilled').length, icon: Clock, color: "amber" },
+            { label: "Active Chats", value: chats.length, icon: MessageSquare, color: "sky" },
+            { label: "Status", value: "VERIFIED", icon: Sparkles, color: "emerald" },
+          ].map((stat, i) => (
+            <div key={i} className="bg-zinc-900 border border-white/10 rounded-3xl p-6 hover:border-violet-500/30 transition-all group">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-xs uppercase tracking-[2px] text-slate-500">{stat.label}</p>
+                  <p className="text-4xl font-bold mt-3 text-white">{stat.value}</p>
+                </div>
+                <div className={`p-4 rounded-2xl bg-zinc-800 group-hover:bg-zinc-700 transition-colors`}>
+                  <stat.icon size={28} className={`text-${stat.color}-400`} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Left Section - Publications & Requests */}
+          <div className="lg:col-span-2 space-y-10">
+            
+            {/* My Publications */}
+            <div className="bg-zinc-900 border border-white/10 rounded-3xl p-8">
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-3xl font-bold flex items-center gap-3">
+                  <BookOpen className="text-violet-400" /> Your Publications
+                </h2>
+                <span className="text-sm text-slate-400 font-mono">{expertNotes.length} resources published</span>
+              </div>
+
+              {expertNotes.length === 0 ? (
+                <div className="text-center py-20 border border-dashed border-white/10 rounded-2xl">
+                  <Award size={60} className="mx-auto text-slate-600 mb-6" />
+                  <p className="text-xl text-slate-300">No publications yet</p>
+                  <p className="text-slate-500 mt-2">Share your expertise with the community</p>
                 </div>
               ) : (
-                requests.map((req) => (
-                  <div key={req._id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs hover:shadow-md transition duration-200 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="bg-amber-50 text-amber-800 text-xs font-bold px-2.5 py-0.5 rounded-md border border-amber-100">
-                          Sem {req.semester || '1'}
-                        </span>
-                        <span className="text-xs font-medium text-gray-400">
-                          {req.createdAt ? new Date(req.createdAt).toLocaleDateString() : 'Recent'}
-                        </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {expertNotes.map(note => (
+                    <div key={note._id} className="relative group">
+                      <NoteCard note={note} showActions />
+                      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                        <button onClick={() => openEditModal(note)} className="bg-zinc-900 p-2 rounded-xl hover:bg-violet-600 transition">
+                          <Edit3 size={18} />
+                        </button>
+                        <button onClick={() => handleDeleteNote(note._id)} className="bg-zinc-900 p-2 rounded-xl hover:bg-red-600 transition">
+                          <Trash2 size={18} />
+                        </button>
                       </div>
-                      <h4 className="font-bold text-gray-800 text-base leading-tight hover:text-emerald-600 cursor-pointer transition">
-                        {req.title}
-                      </h4>
-                      <p className="text-xs font-semibold text-emerald-600 mt-1 mb-2">{req.subject}</p>
-                      <p className="text-xs text-gray-500 line-clamp-2 mb-4 bg-gray-50 p-2.5 rounded-lg">
-                        {req.description || "No description provided."}
-                      </p>
                     </div>
-
-                    <Link 
-                      to={`/upload?request_id=${req._id}&subject=${encodeURIComponent(req.subject)}`}
-                      className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-slate-800 transition"
-                    >
-                      Fulfill This Request
-                    </Link>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
-          </div>
 
-        </div>
-
-        {/* Right Column: Real-Time Interactive Inbox Terminal Layout */}
-        <div className="lg:col-span-1 sticky top-6 space-y-6">
-          <div className="flex justify-between items-center border-b border-gray-200 pb-4">
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-              <MessageSquare size={22} className="text-indigo-600" /> Private Consultations
-            </h2>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden h-[540px] flex flex-col">
-            {!activeChatId ? (
-              /* Threads View Matrix */
-              <div className="flex-grow flex flex-col overflow-hidden">
-                <div className="p-4 bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Incoming Active Channels ({chats.length})
-                </div>
-                
-                <div className="flex-grow overflow-y-auto divide-y divide-slate-100">
-                  {chats.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center p-6 text-center">
-                      <MessageSquare className="text-slate-200 mb-2" size={40} />
-                      <p className="text-xs text-slate-400 font-medium">No active communications found.</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">Students messaging you privately will appear here.</p>
-                    </div>
-                  ) : (
-                    chats.map(chat => {
-                      const lastMsg = chat.messages[chat.messages.length - 1];
-                      return (
-                        <div 
-                          key={chat._id}
-                          onClick={() => setActiveChatId(chat._id)}
-                          className="p-4 hover:bg-indigo-50/30 transition cursor-pointer flex items-start gap-3 group"
-                        >
-                          <div className="p-2 bg-slate-100 text-slate-600 rounded-xl group-hover:bg-indigo-100 group-hover:text-indigo-600 transition">
-                            <User size={16} />
-                          </div>
-                          <div className="flex-grow overflow-hidden">
-                            <div className="flex justify-between items-baseline mb-0.5">
-                              <h4 className="text-sm font-bold text-slate-800 truncate">{chat.student?.name}</h4>
-                              <span className="text-[10px] text-slate-400">
-                                {chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString() : ''}
-                              </span>
-                            </div>
-                            <p className="text-xs text-slate-500 truncate">
-                              {lastMsg ? `${lastMsg.senderModel === 'Expert' ? 'You: ' : ''}${lastMsg.text}` : 'Started a consultation.'}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+            {/* Live Student Demands */}
+            <div className="bg-zinc-900 border border-white/10 rounded-3xl p-8">
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-3xl font-bold flex items-center gap-3">
+                  <Clock className="text-amber-400" /> Live Student Requests
+                </h2>
+                <RouterLink to="/requests" className="text-violet-400 hover:text-violet-300 flex items-center gap-2 text-sm font-medium">
+                  View All <ArrowRight size={16} />
+                </RouterLink>
               </div>
-            ) : (
-              /* Inside Selected Chat Channel Terminal Panel */
-              <div className="flex-grow flex flex-col overflow-hidden">
-                <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <div className="p-1.5 bg-slate-800 text-indigo-400 rounded-lg shrink-0">
-                      <User size={14} />
-                    </div>
-                    <div className="overflow-hidden">
-                      <h4 className="text-xs font-bold truncate">{currentChat?.student?.name}</h4>
-                      <p className="text-[10px] text-slate-400 truncate">{currentChat?.student?.email}</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setActiveChatId(null)}
-                    className="p-1 hover:bg-slate-800 rounded-md text-slate-400 hover:text-white transition"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
 
-                {/* Conversation History Matrix Panel */}
-                <div className="flex-grow overflow-y-auto bg-slate-50 p-4 space-y-3 flex flex-col">
-                  {currentChat?.messages.map((msg) => {
-                    const isExpert = msg.senderModel === 'Expert';
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {requests.length === 0 ? (
+                  <div className="col-span-2 text-center py-16 text-slate-400">No active requests at the moment.</div>
+                ) : (
+                  requests.map((req) => {
+                    const isFulfilled = req.status === 'fulfilled';
                     return (
-                      <div 
-                        key={msg._id} 
-                        className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed shadow-2xs ${
-                          isExpert 
-                            ? 'bg-indigo-600 text-white font-medium self-end rounded-br-none' 
-                            : 'bg-white text-slate-800 border border-slate-200/60 self-start rounded-bl-none'
-                        }`}
-                      >
-                        <p>{msg.text}</p>
-                        <span className={`block text-[9px] mt-1 text-right ${isExpert ? 'text-indigo-200/80' : 'text-slate-400'}`}>
-                          {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                      <div key={req._id} className={`bg-zinc-950 border rounded-3xl p-6 transition-all hover:border-violet-500/50 ${isFulfilled ? 'border-emerald-500/30' : 'border-white/10'}`}>
+                        <div className="flex justify-between mb-4">
+                          <span className="text-xs px-3 py-1 bg-zinc-800 rounded-full">SEM {req.semester}</span>
+                          {isFulfilled && <span className="text-emerald-400 text-xs flex items-center gap-1"><CheckCircle2 size={14} /> Fulfilled</span>}
+                        </div>
+                        <h4 className="font-semibold text-lg leading-tight mb-2">{req.title}</h4>
+                        <p className="text-violet-400 text-sm mb-3">{req.subject}</p>
+                        <p className="text-sm text-slate-400 line-clamp-3">{req.description}</p>
+
+                        {!isFulfilled && (
+                          <RouterLink 
+                            to={`/upload?request_id=${req._id}&subject=${encodeURIComponent(req.subject)}`}
+                            className="mt-6 w-full block text-center py-3 bg-white text-black rounded-2xl font-semibold hover:bg-white/90 transition"
+                          >
+                            Fulfill Request
+                          </RouterLink>
+                        )}
                       </div>
                     );
-                  })}
-                  <div ref={chatEndRef} />
-                </div>
-
-                {/* Secure Message Transmission Bar */}
-                <form onSubmit={handleSendReply} className="p-3 bg-white border-t border-slate-100 flex gap-2">
-                  <input 
-                    type="text" 
-                    placeholder="Type professional advice..." 
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    disabled={sendingMessage}
-                    className="flex-grow bg-slate-50 border border-slate-200 rounded-xl px-3 text-xs focus:outline-hidden focus:border-indigo-500 focus:bg-white transition"
-                  />
-                  <button 
-                    type="submit" 
-                    disabled={sendingMessage || !replyText.trim()}
-                    className="p-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition disabled:bg-slate-200 disabled:text-slate-400"
-                  >
-                    <Send size={14} />
-                  </button>
-                </form>
+                  })
+                )}
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Static Badging Accent */}
-          <div className="bg-linear-to-br from-emerald-600 to-teal-700 rounded-2xl p-5 text-white shadow-md relative overflow-hidden">
+          {/* Right Sidebar - Private Consultations */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-6">
+              <div className="bg-zinc-900 border border-white/10 rounded-3xl overflow-hidden h-[620px] flex flex-col">
+                <div className="p-6 border-b border-white/10 bg-zinc-950">
+                  <h2 className="text-2xl font-bold flex items-center gap-3">
+                    <MessageSquare className="text-sky-400" /> Private Consultations
+                  </h2>
+                </div>
 
-            <div className="absolute right-[-20px] bottom-[-20px] opacity-10">
-              <Award size={140} />
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle className="text-emerald-200 shrink-0 mt-0.5" size={20} />
-              <div>
-                <h5 className="font-bold text-sm tracking-wide">Specialist Badging System</h5>
-                <p className="text-xs text-emerald-100/90 mt-1 leading-relaxed">
-                  Your premium reference notes are automatically distinguished with a <strong>Verified Specialist</strong> profile tier layout stamp to draw priority exposure on student feeds.
-                </p>
+                {!activeChatId ? (
+                  <div className="flex-1 overflow-y-auto p-4">
+                    {chats.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center px-6">
+                        <MessageSquare size={48} className="text-slate-600 mb-4" />
+                        <p className="text-slate-400">No active conversations</p>
+                      </div>
+                    ) : (
+                      chats.map(chat => {
+                        const lastMsg = chat.messages[chat.messages.length - 1];
+                        return (
+                          <div 
+                            key={chat._id}
+                            onClick={() => setActiveChatId(chat._id)}
+                            className="p-4 hover:bg-white/5 rounded-2xl cursor-pointer transition-all mb-2 group"
+                          >
+                            <div className="flex gap-4">
+                              <div className="w-10 h-10 bg-zinc-800 rounded-2xl flex items-center justify-center">
+                                <User size={20} />
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-medium text-white group-hover:text-violet-400 transition">{chat.student?.name}</div>
+                                <p className="text-xs text-slate-500 line-clamp-1">
+                                  {lastMsg ? lastMsg.text : "New consultation started"}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col h-full">
+                    {/* Chat Header */}
+                    <div className="p-5 border-b border-white/10 flex items-center justify-between bg-zinc-950">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-zinc-800 rounded-2xl flex items-center justify-center">
+                          <User size={20} />
+                        </div>
+                        <div>
+                          <p className="font-medium">{currentChat?.student?.name}</p>
+                          <p className="text-xs text-slate-500">{currentChat?.student?.email}</p>
+                        </div>
+                      </div>
+                      <button onClick={() => setActiveChatId(null)} className="text-slate-400 hover:text-white">
+                        <X size={22} />
+                      </button>
+                    </div>
+
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-zinc-950">
+                      {currentChat?.messages.map((msg) => {
+                        const isExpert = msg.senderModel === 'Expert';
+                        return (
+                          <div key={msg._id} className={`flex ${isExpert ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[80%] px-5 py-3 rounded-3xl text-sm ${isExpert 
+                              ? 'bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white' 
+                              : 'bg-zinc-800 text-slate-100'}`}>
+                              <p>{msg.text}</p>
+                              <span className="block text-[10px] mt-2 opacity-70 text-right">
+                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div ref={chatEndRef} />
+                    </div>
+
+                    {/* Reply Input */}
+                    <form onSubmit={handleSendReply} className="p-4 border-t border-white/10 bg-zinc-900">
+                      <div className="flex gap-3">
+                        <input 
+                          type="text" 
+                          placeholder="Type your professional response..." 
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          className="flex-1 bg-zinc-800 border border-white/10 rounded-2xl px-5 py-3 text-sm focus:border-violet-500 outline-none"
+                        />
+                        <button 
+                          type="submit" 
+                          disabled={sendingMessage || !replyText.trim()}
+                          className="bg-violet-600 hover:bg-violet-500 px-6 rounded-2xl disabled:opacity-50 transition"
+                        >
+                          <Send size={20} />
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -487,83 +432,44 @@ export default function ExpertDashboard() {
 
       </div>
 
-      {/* --- Overlay Edit/Update Modal Blueprint --- */}
+      {/* Edit Modal */}
       {editingNote && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative border border-gray-100 animate-in fade-in-50 zoom-in-95 duration-150">
-            <button 
-              onClick={() => setEditingNote(null)}
-              className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition"
-            >
-              <X size={18} />
-            </button>
-            
-            <h3 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
-              <Edit3 className="text-emerald-600" size={20} /> Modify Resource Properties
-            </h3>
-            <p className="text-xs text-gray-500 mb-5">Make changes to your verified document metadata.</p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-xl p-4">
+          <div className="bg-zinc-900 border border-white/10 rounded-3xl w-full max-w-lg p-8">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-2xl font-bold">Update Resource</h3>
+              <button onClick={() => setEditingNote(null)}><X size={24} /></button>
+            </div>
 
-            <form onSubmit={handleUpdateNote} className="space-y-4">
+            <form onSubmit={handleUpdateNote} className="space-y-6">
+              {/* Form fields remain unchanged */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Document Title</label>
-                <input 
-                  type="text" 
-                  value={updateTitle} 
-                  onChange={(e) => setUpdateTitle(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 focus:outline-hidden focus:border-emerald-500 focus:bg-white transition"
-                  required 
-                />
+                <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2">Title</label>
+                <input type="text" value={updateTitle} onChange={(e) => setUpdateTitle(e.target.value)} className="w-full bg-zinc-800 border border-white/10 rounded-2xl px-5 py-3" required />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Subject Field</label>
-                  <input 
-                    type="text" 
-                    value={updateSubject} 
-                    onChange={(e) => setUpdateSubject(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 focus:outline-hidden focus:border-emerald-500 focus:bg-white transition"
-                    required 
-                  />
+                  <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2">Subject</label>
+                  <input type="text" value={updateSubject} onChange={(e) => setUpdateSubject(e.target.value)} className="w-full bg-zinc-800 border border-white/10 rounded-2xl px-5 py-3" required />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Academic Semester</label>
-                  <select 
-                    value={updateSemester} 
-                    onChange={(e) => setUpdateSemester(Number(e.target.value))}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 focus:outline-hidden focus:border-emerald-500 focus:bg-white transition"
-                  >
-                    {[1,2,3,4,5,6,7,8].map(num => (
-                      <option key={num} value={num}>Semester {num}</option>
-                    ))}
+                  <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2">Semester</label>
+                  <select value={updateSemester} onChange={(e) => setUpdateSemester(Number(e.target.value))} className="w-full bg-zinc-800 border border-white/10 rounded-2xl px-5 py-3">
+                    {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>Semester {n}</option>)}
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Resource Blueprint Description</label>
-                <textarea 
-                  value={updateDescription} 
-                  onChange={(e) => setUpdateDescription(e.target.value)}
-                  rows={4}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 focus:outline-hidden focus:border-emerald-500 focus:bg-white transition resize-none"
-                />
+                <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2">Description</label>
+                <textarea value={updateDescription} onChange={(e) => setUpdateDescription(e.target.value)} rows={5} className="w-full bg-zinc-800 border border-white/10 rounded-3xl px-5 py-4 resize-y" />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button 
-                  type="button" 
-                  onClick={() => setEditingNote(null)}
-                  className="px-4 py-2.5 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 transition"
-                >
-                  Discard Changes
-                </button>
-                <button 
-                  type="submit" 
-                  disabled={isUpdating}
-                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition flex items-center gap-2"
-                >
-                  {isUpdating ? "Synchronizing..." : "Apply Updates"}
+              <div className="flex gap-4 pt-4">
+                <button type="button" onClick={() => setEditingNote(null)} className="flex-1 py-4 border border-white/10 rounded-2xl hover:bg-white/5">Cancel</button>
+                <button type="submit" disabled={isUpdating} className="flex-1 py-4 bg-violet-600 hover:bg-violet-500 rounded-2xl font-semibold">
+                  {isUpdating ? "Updating..." : "Save Changes"}
                 </button>
               </div>
             </form>
