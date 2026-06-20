@@ -1,17 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { 
   BookOpen, Upload, LayoutDashboard, 
-  MessageSquare, Shield, LogOut, User 
+  MessageSquare, Shield, LogOut, User, Menu, X 
 } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Guard against unauthenticated sessions
   useEffect(() => {
     const protectedPaths = ['/dashboard', '/upload', '/requests', '/admin'];
     const token = localStorage.getItem('token');
@@ -26,111 +26,134 @@ export default function Navbar() {
     navigate('/login', { replace: true });
   };
 
-  const isSystemAdmin = user?.role === 'admin' || user?.email === 'admin@college.edu';
+  const isSystemAdmin = user?.role === 'admin' || user?.email === 'admin@glowcare.ai';
+  const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="bg-zinc-950 border-b border-white/10 sticky top-0 z-50">
+    // Changed back to a solid black background
+    <nav className="bg-black border-b border-white/10 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo */}
-        <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-3 text-2xl font-bold text-white">
-          <BookOpen size={32} className="text-violet-400" />
-          NoteVault
+        <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-3 group">
+          <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(250,204,21,0.3)] group-hover:shadow-[0_0_25px_rgba(250,204,21,0.5)] transition-all duration-300">
+            <BookOpen size={22} className="text-black" />
+          </div>
+          <span className="text-2xl font-bold text-white tracking-tighter">NoteVault</span>
         </Link>
 
-        <div className="flex items-center gap-8">
-          {user ? (
+        {/* Desktop Icon Navigation - Spacing fixed at 50px */}
+        <div className="hidden md:flex items-center gap-[50px]">
+          {user && (
             <>
-              {/* Navigation Links with Icons */}
               <Link 
                 to="/dashboard" 
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all ${
-                  location.pathname === '/dashboard' 
-                    ? 'bg-violet-600 text-white' 
-                    : 'text-slate-300 hover:bg-zinc-900 hover:text-white'
-                }`}
+                className={`p-3 rounded-xl border transition-all duration-300 ${isActive('/dashboard') 
+                  ? 'bg-yellow-400/10 text-yellow-400 border-yellow-500/30 shadow-[0_0_25px_rgba(250,204,21,0.45)]' 
+                  : 'text-zinc-400 border-transparent hover:text-yellow-400 hover:bg-yellow-400/5 hover:shadow-[0_0_15px_rgba(250,204,21,0.2)]'}`}
+                title="Dashboard"
               >
-                <LayoutDashboard size={20} />
-                <span className="font-medium">Dashboard</span>
+                <LayoutDashboard size={24} />
               </Link>
 
               <Link 
                 to="/requests" 
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all ${
-                  location.pathname === '/requests' 
-                    ? 'bg-violet-600 text-white' 
-                    : 'text-slate-300 hover:bg-zinc-900 hover:text-white'
-                }`}
+                className={`p-3 rounded-xl border transition-all duration-300 ${isActive('/requests') 
+                  ? 'bg-yellow-400/10 text-yellow-400 border-yellow-500/30 shadow-[0_0_25px_rgba(250,204,21,0.45)]' 
+                  : 'text-zinc-400 border-transparent hover:text-yellow-400 hover:bg-yellow-400/5 hover:shadow-[0_0_15px_rgba(250,204,21,0.2)]'}`}
+                title="Requests"
               >
-                <MessageSquare size={20} />
-                <span className="font-medium">Requests</span>
+                <MessageSquare size={24} />
               </Link>
 
               <Link 
                 to="/upload" 
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all ${
-                  location.pathname === '/upload' 
-                    ? 'bg-violet-600 text-white' 
-                    : 'text-slate-300 hover:bg-zinc-900 hover:text-white'
-                }`}
+                className={`p-3 rounded-xl border transition-all duration-300 ${isActive('/upload') 
+                  ? 'bg-yellow-400/10 text-yellow-400 border-yellow-500/30 shadow-[0_0_25px_rgba(250,204,21,0.45)]' 
+                  : 'text-zinc-400 border-transparent hover:text-yellow-400 hover:bg-yellow-400/5 hover:shadow-[0_0_15px_rgba(250,204,21,0.2)]'}`}
+                title="Upload Notes"
               >
-                <Upload size={20} />
-                <span className="font-medium">Upload Notes</span>
+                <Upload size={24} />
               </Link>
 
               {isSystemAdmin && (
                 <Link 
                   to="/admin" 
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all ${
-                    location.pathname === '/admin' 
-                      ? 'bg-red-600 text-white' 
-                      : 'text-slate-300 hover:bg-zinc-900 hover:text-white'
-                  }`}
+                  className={`p-3 rounded-xl border transition-all duration-300 ${isActive('/admin') 
+                    ? 'bg-red-500/10 text-red-400 border-red-500/30 shadow-[0_0_25px_rgba(239,68,68,0.45)]' 
+                    : 'text-zinc-400 border-transparent hover:text-red-400 hover:bg-red-500/5 hover:shadow-[0_0_15px_rgba(239,68,68,0.2)]'}`}
+                  title="Admin Panel"
                 >
-                  <Shield size={20} />
-                  <span className="font-medium">Admin Panel</span>
+                  <Shield size={24} />
                 </Link>
               )}
-
-              <div className="h-6 w-px bg-white/10" />
-
-              {/* User Info & Logout */}
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-zinc-800 rounded-2xl flex items-center justify-center border border-white/10">
-                    <User size={20} className="text-slate-400" />
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-white truncate max-w-[140px]">{user.name}</p>
-                    <p className="text-xs text-slate-500 font-mono">
-                      {isSystemAdmin ? 'System Admin' : `Sem ${user.semester || 3}`}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 text-slate-400 hover:text-red-400 transition p-2 rounded-xl hover:bg-zinc-900"
-                  title="Logout"
-                >
-                  <LogOut size={20} />
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="text-slate-300 hover:text-white transition font-medium">
-                Login
-              </Link>
-              <Link 
-                to="/register" 
-                className="bg-violet-600 text-white px-6 py-2.5 rounded-2xl hover:bg-violet-700 transition font-medium"
-              >
-                Register
-              </Link>
             </>
           )}
         </div>
+
+        {/* User Info & Mobile Toggle */}
+        <div className="flex items-center gap-6">
+          {user && (
+            <div className="hidden md:flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm font-medium text-white">{user.name}</p>
+                <p className="text-xs text-zinc-500">Sem {user.semester || 2}</p>
+              </div>
+              <div className="w-9 h-9 bg-zinc-900 rounded-xl flex items-center justify-center border border-yellow-500/20 shadow-[0_0_15px_rgba(250,204,21,0.1)]">
+                <User size={18} className="text-yellow-400" />
+              </div>
+            </div>
+          )}
+
+          {/* Logout Button */}
+          {user && (
+            <button
+              onClick={handleLogout}
+              className="hidden md:block text-zinc-400 hover:text-red-400 transition p-3 rounded-xl hover:bg-red-500/5 hover:shadow-[0_0_15px_rgba(239,68,68,0.15)]"
+              title="Logout"
+            >
+              <LogOut size={22} />
+            </button>
+          )}
+
+          {/* Mobile Menu Button */}
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden text-zinc-400 hover:text-yellow-400 p-3 rounded-xl transition"
+          >
+            {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && user && (
+        <div className="md:hidden bg-black border-t border-white/10 py-6 px-6">
+          <div className="flex flex-col gap-3">
+            <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/dashboard') ? 'bg-yellow-400/10 text-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.3)]' : 'text-zinc-300 hover:bg-white/5'}`}>
+              <LayoutDashboard size={24} /> Dashboard
+            </Link>
+            <Link to="/requests" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/requests') ? 'bg-yellow-400/10 text-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.3)]' : 'text-zinc-300 hover:bg-white/5'}`}>
+              <MessageSquare size={24} /> Requests
+            </Link>
+            <Link to="/upload" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/upload') ? 'bg-yellow-400/10 text-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.3)]' : 'text-zinc-300 hover:bg-white/5'}`}>
+              <Upload size={24} /> Upload Notes
+            </Link>
+
+            {isSystemAdmin && (
+              <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/admin') ? 'bg-red-500/10 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'text-zinc-300 hover:bg-white/5'}`}>
+                <Shield size={24} /> Admin Panel
+              </Link>
+            )}
+
+            <button
+              onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
+              className="flex items-center gap-4 px-5 py-4 rounded-xl text-lg text-red-400 hover:bg-red-500/5 mt-4 transition"
+            >
+              <LogOut size={24} /> Logout
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
