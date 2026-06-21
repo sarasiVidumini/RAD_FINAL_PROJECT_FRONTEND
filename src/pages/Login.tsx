@@ -219,11 +219,8 @@ export default function Login() {
             </span>
           </button>
         </div>
-
-        <div className="text-center mt-6 text-xs text-zinc-600 tracking-wide font-medium">
-          Demo Admin Configuration: admin@glowcare.ai / admin123
+        
         </div>
       </div>
-    </div>
   );
 }

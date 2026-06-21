@@ -5,13 +5,16 @@ import API from '../lib/api';
 import toast from 'react-hot-toast';
 import { BookOpen, Award, GraduationCap } from 'lucide-react';
 
+
 type UserRole = 'student' | 'expert';
+
 
 declare global {
   interface Window {
     google?: any;
   }
 }
+
 
 export default function Register() {
   const [role, setRole] = useState<UserRole>('student');
@@ -26,14 +29,19 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const GOOGLE_CLIENT_ID = 
-    import.meta.env.VITE_GOOGLE_CLIENT_ID || 
+
+  const GOOGLE_CLIENT_ID =
+    import.meta.env.VITE_GOOGLE_CLIENT_ID ||
     "872414388425-o661s1fjl9ot581eof75210i81l7p79e.apps.googleusercontent.com";
 
-  const isAdminEmail = formData.email.toLowerCase() === 'admin@glowcare.ai';
+
+  // FIXED: Updated admin detection criteria to target admin@notevault.com (matches backend authController.ts and auth.routes.ts)
+  const isAdminEmail = formData.email.toLowerCase() === 'admin@notevault.com';
+
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -42,31 +50,37 @@ export default function Register() {
     script.defer = true;
     document.body.appendChild(script);
 
+
     return () => {
       document.body.removeChild(script);
     };
   }, []);
 
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: name === 'semester' ? parseInt(value, 10) : value 
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'semester' ? parseInt(value, 10) : value
     }));
   };
+
 
   const handleAuthSuccess = (user: any, token: string) => {
     login(user, token);
     toast.success("Account setup complete!");
+
 
     if (user.role === 'admin') navigate('/admin');
     else if (user.role === 'expert') navigate('/expert-dashboard');
     else navigate('/dashboard');
   };
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
 
     const payload = {
       name: formData.name,
@@ -78,6 +92,7 @@ export default function Register() {
       ...(!isAdminEmail && role === 'expert' && { expertise: formData.expertise })
     };
 
+
     try {
       const res = await API.post('/auth/register', payload);
       handleAuthSuccess(res.data.user, res.data.token);
@@ -88,13 +103,16 @@ export default function Register() {
     }
   };
 
+
   const handleGoogleLogin = () => {
     if (!window.google) {
       toast.error("Google authentication engine is loading. Please try again.");
       return;
     }
 
+
     setGoogleLoading(true);
+
 
     const client = window.google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID.trim(),
@@ -105,6 +123,7 @@ export default function Register() {
           toast.error("Google access negotiation failed.");
           return;
         }
+
 
         try {
           // Enhanced: Passes registration choices along with OAuth Token
@@ -124,13 +143,15 @@ export default function Register() {
       },
     });
 
+
     client.requestAccessToken();
   };
+
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4 py-12 selection:bg-yellow-400 selection:text-black">
       <div className="w-full max-w-md">
-        
+       
         {/* Header Branding */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
@@ -146,9 +167,10 @@ export default function Register() {
           </p>
         </div>
 
+
         {/* Form Container Card */}
         <div className="bg-zinc-900/50 backdrop-blur-md rounded-3xl p-8 border border-zinc-800 shadow-[0_0_40px_rgba(0,0,0,0.7)]">
-          
+         
           {/* Role Switching Tabs */}
           <div className="bg-zinc-950 p-1.5 rounded-2xl border border-zinc-800 flex gap-2 mb-6">
             <button
@@ -156,7 +178,7 @@ export default function Register() {
               onClick={() => setRole('student')}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs uppercase tracking-wider font-bold rounded-xl transition-all duration-200 ${
                 role === 'student' && !isAdminEmail
-                  ? 'bg-yellow-400 text-black shadow-md' 
+                  ? 'bg-yellow-400 text-black shadow-md'
                   : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
               }`}
             >
@@ -167,7 +189,7 @@ export default function Register() {
               onClick={() => setRole('expert')}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs uppercase tracking-wider font-bold rounded-xl transition-all duration-200 ${
                 role === 'expert' && !isAdminEmail
-                  ? 'bg-yellow-400 text-black shadow-md' 
+                  ? 'bg-yellow-400 text-black shadow-md'
                   : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
               }`}
             >
@@ -175,36 +197,38 @@ export default function Register() {
             </button>
           </div>
 
+
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Full Name */}
             <div>
               <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
                 Full Name
               </label>
-              <input 
-                type="text" 
-                name="name" 
-                value={formData.name} 
-                onChange={handleChange} 
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
                 placeholder="Enter your full name"
-                required 
-                className="w-full px-4 py-3.5 bg-zinc-950 text-white border border-zinc-800 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20 transition duration-200 placeholder-zinc-600" 
+                required
+                className="w-full px-4 py-3.5 bg-zinc-950 text-white border border-zinc-800 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20 transition duration-200 placeholder-zinc-600"
               />
             </div>
+
 
             {/* Email Address */}
             <div>
               <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
                 Email Address
               </label>
-              <input 
-                type="email" 
-                name="email" 
-                value={formData.email} 
-                onChange={handleChange} 
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
                 placeholder="Enter your email"
-                required 
-                className="w-full px-4 py-3.5 bg-zinc-950 text-white border border-zinc-800 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20 transition duration-200 placeholder-zinc-600" 
+                required
+                className="w-full px-4 py-3.5 bg-zinc-950 text-white border border-zinc-800 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20 transition duration-200 placeholder-zinc-600"
               />
               {isAdminEmail && (
                 <p className="mt-2 text-xs text-yellow-400 font-semibold animate-pulse">
@@ -213,37 +237,40 @@ export default function Register() {
               )}
             </div>
 
+
             {/* Password */}
             <div>
               <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
                 Password
               </label>
-              <input 
-                type="password" 
-                name="password" 
-                value={formData.password} 
-                onChange={handleChange} 
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
                 placeholder="Create a password"
-                required 
-                className="w-full px-4 py-3.5 bg-zinc-950 text-white border border-zinc-800 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20 transition duration-200 placeholder-zinc-600" 
+                required
+                className="w-full px-4 py-3.5 bg-zinc-950 text-white border border-zinc-800 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20 transition duration-200 placeholder-zinc-600"
               />
             </div>
+
 
             {/* Department */}
             <div>
               <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
                 Department
               </label>
-              <input 
-                type="text" 
-                name="department" 
-                value={formData.department} 
-                onChange={handleChange} 
+              <input
+                type="text"
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
                 placeholder="e.g. Software Engineering"
-                required 
-                className="w-full px-4 py-3.5 bg-zinc-950 text-white border border-zinc-800 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20 transition duration-200 placeholder-zinc-600" 
+                required
+                className="w-full px-4 py-3.5 bg-zinc-950 text-white border border-zinc-800 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20 transition duration-200 placeholder-zinc-600"
               />
             </div>
+
 
             {/* Role-Based Attribute Forms */}
             {!isAdminEmail && role === 'student' && (
@@ -251,10 +278,10 @@ export default function Register() {
                 <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
                   Current Semester
                 </label>
-                <select 
-                  name="semester" 
-                  value={formData.semester} 
-                  onChange={handleChange} 
+                <select
+                  name="semester"
+                  value={formData.semester}
+                  onChange={handleChange}
                   className="w-full px-4 py-3.5 bg-zinc-950 text-white border border-zinc-800 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20 transition duration-200"
                 >
                   {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
@@ -264,32 +291,35 @@ export default function Register() {
               </div>
             )}
 
+
             {!isAdminEmail && role === 'expert' && (
               <div>
                 <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
                   Area of Expertise
                 </label>
-                <input 
-                  type="text" 
-                  name="expertise" 
-                  value={formData.expertise} 
-                  onChange={handleChange} 
+                <input
+                  type="text"
+                  name="expertise"
+                  value={formData.expertise}
+                  onChange={handleChange}
                   placeholder="e.g. Data Structures, Web Architectures"
-                  required 
-                  className="w-full px-4 py-3.5 bg-zinc-950 text-white border border-zinc-800 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20 transition duration-200 placeholder-zinc-600" 
+                  required
+                  className="w-full px-4 py-3.5 bg-zinc-950 text-white border border-zinc-800 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20 transition duration-200 placeholder-zinc-600"
                 />
               </div>
             )}
 
+
             {/* Submit Button */}
-            <button 
-              type="submit" 
-              disabled={loading || googleLoading} 
+            <button
+              type="submit"
+              disabled={loading || googleLoading}
               className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:bg-yellow-600/50 text-black font-bold py-3.5 rounded-xl transition duration-200 text-base shadow-[0_0_20px_rgba(250,204,21,0.2)] hover:shadow-[0_0_25px_rgba(250,204,21,0.4)] active:scale-[0.99] mt-2"
             >
               {loading ? "Creating Account..." : "Create Account"}
             </button>
           </form>
+
 
           {/* Navigation link */}
           <div className="text-center mt-5">
@@ -301,12 +331,14 @@ export default function Register() {
             </p>
           </div>
 
+
           {/* Context Divider */}
           <div className="flex items-center my-6">
             <div className="flex-1 border-t border-zinc-800"></div>
             <span className="px-4 text-xs font-bold text-zinc-500 uppercase tracking-widest">OR</span>
             <div className="flex-1 border-t border-zinc-800"></div>
           </div>
+
 
           {/* Google Single Sign-Up Integration Button */}
           <button
@@ -339,6 +371,7 @@ export default function Register() {
               {googleLoading ? "Signing up with Google..." : "Sign up with Google"}
             </span>
           </button>
+
 
         </div>
       </div>

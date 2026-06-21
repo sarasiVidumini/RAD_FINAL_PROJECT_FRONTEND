@@ -7,11 +7,11 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Upload from './pages/Upload';
 import Dashboard from './pages/student/Dashboard';
-import StudentExperts from './pages/StudentExperts'; // NEW: Imported the expert specialist directory page
+import StudentExperts from './pages/StudentExperts'; // New Expert Directory component Matrix Link
 import ExpertDashboard from './pages/expert/ExpertDashboard'; 
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import Requests from './pages/Requests';
-import NoteDetailsPage from './pages/NoteDetailsPage'; // UPDATED: Imported the new secure note details page component
+import NoteDetailsPage from './pages/NoteDetailsPage'; // Dynamic detailed secure notes preview node
 
 import { useAuth } from './hooks/useAuth';
 
@@ -24,9 +24,11 @@ function PrivateRoute({ children, allowedRoles }: {
   
   if (!user && !token) return <Navigate to="/login" replace />;
   
-  // Standardized routing targets to prevent infinite loops or broken path links
+  // Standardized routing loops management checking admin credentials matrix matching rules
   if (user && allowedRoles && !allowedRoles.includes(user.role)) {
-    if (user.role === 'admin') return <Navigate to="/admin" replace />;
+    if (user.role === 'admin' || user.email?.toLowerCase() === 'admin@notevault.com' || user.email?.toLowerCase() === 'admin@glowcare.ai') {
+      return <Navigate to="/admin" replace />;
+    }
     if (user.role === 'expert') return <Navigate to="/expert-dashboard" replace />;
     return <Navigate to="/dashboard" replace />;
   }
@@ -39,8 +41,10 @@ function DynamicDashboardFallback() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   
-  // Ensured targets perfectly match Route definitions below
-  if (user.role === 'admin') return <Navigate to="/admin" replace />;
+  // Checking both role properties and matching admin string signatures explicitly
+  if (user.role === 'admin' || user.email?.toLowerCase() === 'admin@notevault.com' || user.email?.toLowerCase() === 'admin@glowcare.ai') {
+    return <Navigate to="/admin" replace />;
+  }
   if (user.role === 'expert') return <Navigate to="/expert-dashboard" replace />;
   return <Navigate to="/dashboard" replace />;
 }
@@ -74,7 +78,7 @@ export default function App() {
             } 
           />
 
-          {/* NEW: Explicit private path linking up your customized Student Expert Chat Matrix */}
+          {/* Explicit private path linking up your customized Student Expert Chat Matrix */}
           <Route 
             path="/experts" 
             element={
@@ -102,6 +106,7 @@ export default function App() {
             } 
           />
 
+          {/* Root Admin Control Panel View Route */}
           <Route 
             path="/admin" 
             element={
@@ -111,7 +116,17 @@ export default function App() {
             } 
           />
 
-          {/* UPDATED: Added the dynamic routing parameter path for viewing specific secure documents */}
+          {/* Secure Registered User Profiles Directory Registry Path View */}
+          <Route 
+            path="/admin/users" 
+            element={
+              <PrivateRoute allowedRoles={['admin']}>
+                <AdminDashboard />
+              </PrivateRoute>
+            } 
+          />
+
+          {/* Dynamic routing parameter path for viewing specific secure documents */}
           <Route 
             path="/notes/:noteId" 
             element={
