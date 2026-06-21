@@ -26,6 +26,13 @@ export interface GroupMessage {
 
 export type NoteDocType = 'note' | 'paper';
 
+interface NoteUploader {
+  _id: string; // Add this line
+  name: string;
+  department?: string;
+  email?: string;
+  role: 'student' | 'expert' | 'admin';
+}
 export interface Note {
   _id: string;
   title: string;
@@ -58,3 +65,4 @@ export interface WhitelistEntry {
   grantedBy: string;
   createdAt: string;
 }
+
