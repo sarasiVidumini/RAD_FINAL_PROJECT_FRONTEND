@@ -8,6 +8,22 @@ export interface User {
   expertise?: string;
 }
 
+export interface GroupMessage {
+  _id?: string;
+  text?: string;
+  fileUrl?: string;
+  fileName?: string;
+  cameraSnapshot?: string;
+  emoji?: string;
+  sender: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  timestamp?: string | Date;
+}
+
 export type NoteDocType = 'note' | 'paper';
 
 export interface Note {
@@ -27,5 +43,18 @@ export interface Note {
   };
   downloads: number;
   averageRating: number;
+  createdAt: string;
+}
+
+export interface QuizQuestion {
+  q: string;
+  a: string[];
+  correct: number;
+}
+
+export interface WhitelistEntry {
+  _id: string;
+  email: string;
+  grantedBy: string;
   createdAt: string;
 }

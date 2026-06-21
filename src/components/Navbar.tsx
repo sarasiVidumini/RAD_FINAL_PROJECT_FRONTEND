@@ -1,9 +1,10 @@
+// src/components/Navbar.tsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { 
-  BookOpen, Upload, LayoutDashboard, 
-  MessageSquare, Shield, LogOut, User, Menu, X 
+  BookOpen, Upload, LayoutDashboard, MessageSquare, 
+  Users, Shield, LogOut, User, Menu, X 
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -13,7 +14,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const protectedPaths = ['/dashboard', '/upload', '/requests', '/admin'];
+    const protectedPaths = ['/dashboard', '/upload', '/requests', '/admin', '/group-chat'];
     const token = localStorage.getItem('token');
     
     if (protectedPaths.includes(location.pathname) && !user && !token) {
@@ -26,7 +27,7 @@ export default function Navbar() {
     navigate('/login', { replace: true });
   };
 
-  const isSystemAdmin = user?.role === 'admin' || user?.email === 'admin@glowcare.ai';
+  const isSystemAdmin = user?.role === 'admin' || user?.email?.trim().toLowerCase() === 'admin@glowcare.ai';
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -40,7 +41,7 @@ export default function Navbar() {
           <span className="text-2xl font-bold text-white tracking-tighter">NoteVault</span>
         </Link>
 
-        {/* Desktop Icon Navigation - Spacing fixed at 50px */}
+        {/* Desktop Icon Navigation - Spacing strictly fixed at 50px */}
         <div className="hidden md:flex items-center gap-[50px]">
           {user && (
             <>
@@ -62,6 +63,17 @@ export default function Navbar() {
                 title="Requests"
               >
                 <MessageSquare size={24} />
+              </Link>
+
+              {/* Group Chat Real-Time Sync Navigation Entry */}
+              <Link 
+                to="/group-chat" 
+                className={`p-3 rounded-xl border transition-all duration-300 ${isActive('/group-chat') 
+                  ? 'bg-yellow-400/10 text-yellow-400 border-yellow-500/30 shadow-[0_0_25px_rgba(250,204,21,0.45)]' 
+                  : 'text-zinc-400 border-transparent hover:text-yellow-400 hover:bg-yellow-400/5 hover:shadow-[0_0_15px_rgba(250,204,21,0.2)]'}`}
+                title="Public Sync Room"
+              >
+                <Users size={24} />
               </Link>
 
               <Link 
@@ -89,11 +101,10 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* User Info / Guest Auth Actions & Mobile Toggle */}
+        {/* User Info & Actions Layout */}
         <div className="flex items-center gap-6">
           {user ? (
             <>
-              {/* Logged In Info Layout */}
               <div className="hidden md:flex items-center gap-3">
                 <div className="text-right">
                   <p className="text-sm font-medium text-white">{user.name}</p>
@@ -104,7 +115,6 @@ export default function Navbar() {
                 </div>
               </div>
 
-              {/* Logout Button */}
               <button
                 onClick={handleLogout}
                 className="hidden md:block text-zinc-400 hover:text-red-400 transition p-3 rounded-xl hover:bg-red-500/5 hover:shadow-[0_0_15px_rgba(239,68,68,0.15)]"
@@ -114,24 +124,13 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            /* Logged Out Guest Interface Links */
             <div className="hidden md:flex items-center gap-5">
-              <Link 
-                to="/login" 
-                className="text-sm font-medium text-zinc-400 hover:text-yellow-400 transition"
-              >
-                Sign In
-              </Link>
-              <Link 
-                to="/register" 
-                className="text-sm font-bold bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-xl transition shadow-[0_0_15px_rgba(250,204,21,0.25)]"
-              >
-                Sign Up
-              </Link>
+              <Link to="/login" className="text-sm font-medium text-zinc-400 hover:text-yellow-400 transition">Sign In</Link>
+              <Link to="/register" className="text-sm font-bold bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-xl transition shadow-[0_0_15px_rgba(250,204,21,0.25)]">Sign Up</Link>
             </div>
           )}
 
-          {/* Mobile Menu Button Container */}
+          {/* Mobile Menu Toggle Button */}
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="md:hidden text-zinc-400 hover:text-yellow-400 p-3 rounded-xl transition"
@@ -141,53 +140,42 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Content Wrap */}
+      {/* Mobile Drawer Overlay */}
       {isMobileMenuOpen && (
         <div className="md:hidden bg-black border-t border-white/10 py-6 px-6">
           <div className="flex flex-col gap-3">
             {user ? (
               <>
-                {/* Auth Navigation Options */}
-                <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/dashboard') ? 'bg-yellow-400/10 text-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.3)]' : 'text-zinc-300 hover:bg-white/5'}`}>
+                <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/dashboard') ? 'bg-yellow-400/10 text-yellow-400' : 'text-zinc-300 hover:bg-white/5'}`}>
                   <LayoutDashboard size={24} /> Dashboard
                 </Link>
-                <Link to="/requests" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/requests') ? 'bg-yellow-400/10 text-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.3)]' : 'text-zinc-300 hover:bg-white/5'}`}>
+                <Link to="/requests" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/requests') ? 'bg-yellow-400/10 text-yellow-400' : 'text-zinc-300 hover:bg-white/5'}`}>
                   <MessageSquare size={24} /> Requests
                 </Link>
-                <Link to="/upload" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/upload') ? 'bg-yellow-400/10 text-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.3)]' : 'text-zinc-300 hover:bg-white/5'}`}>
+                <Link to="/group-chat" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/group-chat') ? 'bg-yellow-400/10 text-yellow-400' : 'text-zinc-300 hover:bg-white/5'}`}>
+                  <Users size={24} /> Group Sync
+                </Link>
+                <Link to="/upload" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/upload') ? 'bg-yellow-400/10 text-yellow-400' : 'text-zinc-300 hover:bg-white/5'}`}>
                   <Upload size={24} /> Upload Notes
                 </Link>
 
                 {isSystemAdmin && (
-                  <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/admin') ? 'bg-red-500/10 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'text-zinc-300 hover:bg-white/5'}`}>
+                  <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/admin') ? 'bg-red-500/10 text-red-400' : 'text-zinc-300 hover:bg-white/5'}`}>
                     <Shield size={24} /> Admin Panel
                   </Link>
                 )}
 
                 <button
                   onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                  className="flex items-center gap-4 px-5 py-4 rounded-xl text-lg text-red-400 hover:bg-red-500/5 mt-4 transition"
+                  className="flex items-center gap-4 px-5 py-4 rounded-xl text-lg text-red-400 hover:bg-red-500/5 mt-4 transition items-left"
                 >
                   <LogOut size={24} /> Logout
                 </button>
               </>
             ) : (
               <>
-                {/* Guest Navigation Options */}
-                <Link 
-                  to="/login" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center justify-center w-full py-3 text-zinc-300 hover:text-white bg-zinc-900 rounded-xl font-medium transition"
-                >
-                  Sign In
-                </Link>
-                <Link 
-                  to="/register" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center justify-center w-full py-3 bg-yellow-400 hover:bg-yellow-500 text-black rounded-xl font-bold transition"
-                >
-                  Sign Up
-                </Link>
+                <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center w-full py-3 text-zinc-300 hover:text-white bg-zinc-900 rounded-xl font-medium transition">Sign In</Link>
+                <Link to="/register" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center w-full py-3 bg-yellow-400 hover:bg-yellow-500 text-black rounded-xl font-bold transition">Sign Up</Link>
               </>
             )}
           </div>

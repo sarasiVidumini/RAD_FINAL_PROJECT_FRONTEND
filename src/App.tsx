@@ -1,3 +1,4 @@
+// src/App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
@@ -7,11 +8,12 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Upload from './pages/Upload';
 import Dashboard from './pages/student/Dashboard';
-import StudentExperts from './pages/StudentExperts'; // New Expert Directory component Matrix Link
+import StudentExperts from './pages/StudentExperts';
 import ExpertDashboard from './pages/expert/ExpertDashboard'; 
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import Requests from './pages/Requests';
-import NoteDetailsPage from './pages/NoteDetailsPage'; // Dynamic detailed secure notes preview node
+import GroupChat from './pages/GroupChat'; // High-fidelity communication module
+import NoteDetailsPage from './pages/NoteDetailsPage';
 
 import { useAuth } from './hooks/useAuth';
 
@@ -24,9 +26,8 @@ function PrivateRoute({ children, allowedRoles }: {
   
   if (!user && !token) return <Navigate to="/login" replace />;
   
-  // Standardized routing loops management checking admin credentials matrix matching rules
   if (user && allowedRoles && !allowedRoles.includes(user.role)) {
-    if (user.role === 'admin' || user.email?.toLowerCase() === 'admin@notevault.com' || user.email?.toLowerCase() === 'admin@glowcare.ai') {
+    if (user.role === 'admin' || user.email?.toLowerCase() === 'admin@glowcare.ai' || user.email?.toLowerCase() === 'admin@notevault.com') {
       return <Navigate to="/admin" replace />;
     }
     if (user.role === 'expert') return <Navigate to="/expert-dashboard" replace />;
@@ -36,13 +37,11 @@ function PrivateRoute({ children, allowedRoles }: {
   return children;
 }
 
-// Redirect Component to forward generic unassigned logged-in paths to proper dashboards
 function DynamicDashboardFallback() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   
-  // Checking both role properties and matching admin string signatures explicitly
-  if (user.role === 'admin' || user.email?.toLowerCase() === 'admin@notevault.com' || user.email?.toLowerCase() === 'admin@glowcare.ai') {
+  if (user.role === 'admin' || user.email?.toLowerCase() === 'admin@glowcare.ai' || user.email?.toLowerCase() === 'admin@notevault.com') {
     return <Navigate to="/admin" replace />;
   }
   if (user.role === 'expert') return <Navigate to="/expert-dashboard" replace />;
@@ -50,7 +49,6 @@ function DynamicDashboardFallback() {
 }
 
 export default function App() {
-  
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
@@ -78,7 +76,6 @@ export default function App() {
             } 
           />
 
-          {/* Explicit private path linking up your customized Student Expert Chat Matrix */}
           <Route 
             path="/experts" 
             element={
@@ -106,7 +103,16 @@ export default function App() {
             } 
           />
 
-          {/* Root Admin Control Panel View Route */}
+          {/* Secure Live Group Chat Matrix Route Link */}
+          <Route 
+            path="/group-chat" 
+            element={
+              <PrivateRoute allowedRoles={['student', 'expert', 'admin']}>
+                <GroupChat />
+              </PrivateRoute>
+            } 
+          />
+
           <Route 
             path="/admin" 
             element={
@@ -116,7 +122,6 @@ export default function App() {
             } 
           />
 
-          {/* Secure Registered User Profiles Directory Registry Path View */}
           <Route 
             path="/admin/users" 
             element={
@@ -126,7 +131,6 @@ export default function App() {
             } 
           />
 
-          {/* Dynamic routing parameter path for viewing specific secure documents */}
           <Route 
             path="/notes/:noteId" 
             element={
@@ -136,7 +140,6 @@ export default function App() {
             } 
           />
 
-          {/* Catch-all dynamic fallback for routing redirects */}
           <Route path="/home" element={<DynamicDashboardFallback />} />
           <Route path="*" element={<DynamicDashboardFallback />} />
         </Routes>
