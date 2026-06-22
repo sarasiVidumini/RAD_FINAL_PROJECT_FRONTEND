@@ -6,6 +6,7 @@ export interface User {
   role: 'student' | 'expert' | 'admin';
   semester?: number;
   expertise?: string;
+  avatarUrl?: string;
 }
 
 export interface GroupMessage {

@@ -14,7 +14,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const protectedPaths = ['/dashboard', '/upload', '/requests', '/admin', '/group-chat', '/study'];
+    const protectedPaths = ['/dashboard', '/upload', '/requests', '/admin', '/group-chat', '/study','/profile'];
     const token = localStorage.getItem('token');
     
     if (protectedPaths.includes(location.pathname) && !user && !token) {
@@ -146,15 +146,32 @@ export default function Navbar() {
         <div className="flex items-center gap-6">
           {user ? (
             <>
-              <div className="hidden md:flex items-center gap-3">
-                <div className="text-right">
+            {/* Linked profile navigation */}
+            
+
+            <Link to="/profile" className="hidden md:flex items-center gap-3 hover:opacity-80 transition">
+              <div className="text-right">
                   <p className="text-sm font-medium text-white">{user.name}</p>
                   <p className="text-xs text-zinc-500">Sem {user.semester || 2}</p>
-                </div>
-                <div className="w-9 h-9 bg-zinc-900 rounded-xl flex items-center justify-center border border-yellow-500/20 shadow-[0_0_15px_rgba(250,204,21,0.1)]">
-                  <User size={18} className="text-yellow-400" />
-                </div>
               </div>
+  
+              <div className="relative w-9 h-9 bg-zinc-900 rounded-xl flex items-center justify-center border border-yellow-500/20 shadow-[0_0_15px_rgba(250,204,21,0.1)] overflow-hidden">
+                  {user.avatarUrl ? (
+                    <img 
+                    src={`http://localhost:5000${user.avatarUrl}`} // Adjust base URL as needed
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+              />
+                  ) : (
+                    <User size={18} className="text-yellow-400" />
+                  )}
+    
+                    {/* Red Dot Indicator */}
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-black"></span>
+              </div>
+            </Link>
+
+              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-zinc-400 hover:text-yellow-400 p-3 rounded-xl transition">{isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}</button>
 
               <button
                 onClick={handleLogout}
@@ -171,13 +188,7 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Mobile Menu Toggle */}
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-zinc-400 hover:text-yellow-400 p-3 rounded-xl transition"
-          >
-            {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
-          </button>
+
         </div>
       </div>
 
@@ -235,14 +246,13 @@ export default function Navbar() {
                         </span>
                       )}
                     </div>
+
                     <span>AI Study Mode</span>
-                    <span className="ml-auto text-[9px] font-bold uppercase tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full"
-                      style={{ fontFamily: "ui-monospace,'SF Mono',Consolas,monospace" }}
-                    >
-                      NEW
-                    </span>
+                    
                   </Link>
                 )}
+
+                  <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-4 text-zinc-300 border border-white/10 rounded-xl mb-2">View Profile</Link>
 
                 {isSystemAdmin && (
                   <Link

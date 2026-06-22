@@ -15,6 +15,7 @@ import AdminDashboard from './pages/Admin/AdminDashboard';
 import Requests from './pages/Requests';
 import GroupChat from './pages/GroupChat';
 import NoteDetailsPage from './pages/NoteDetailsPage';
+import Profile from './pages/Profile';
 
 import { useAuth } from './hooks/useAuth';
 
@@ -77,6 +78,16 @@ export default function App() {
             } 
           />
 
+            <Route 
+              path="/profile" 
+              element={
+                  <PrivateRoute allowedRoles={['student', 'expert', 'admin']}>
+                    <Profile />
+                  </PrivateRoute>
+              } 
+            />
+
+          
           {/* ── AI Study Mode — students only ── */}
           <Route
             path="/study"

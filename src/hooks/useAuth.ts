@@ -1,5 +1,7 @@
-// src/hooks/useAuth.ts
+
 import { useState, useEffect } from 'react';
+
+
 import { User } from '../types';
 
 export const useAuth = () => {
@@ -16,11 +18,19 @@ export const useAuth = () => {
         }
         setUser(parsedUser);
       } catch (e) {
-        console.error("Error formatting user signature mapping:", e);
+        console.error("Error parsing user:", e);
       }
     }
     setLoading(false);
   }, []);
+
+  // Syncs local state with updated user object from API
+  const updateUser = (updatedData: Partial<User>) => {
+    if (!user) return;
+    const newUser = { ...user, ...updatedData };
+    localStorage.setItem('user', JSON.stringify(newUser));
+    setUser(newUser);
+  };
 
   const login = (userData: User, token: string) => {
     const adjustedUser = { ...userData };
@@ -38,9 +48,5 @@ export const useAuth = () => {
     setUser(null);
   };
 
-  const getAuthToken = (): string | null => {
-    return localStorage.getItem('token');
-  };
-
-  return { user, login, logout, loading, getAuthToken };
+  return { user, login, logout, updateUser, loading };
 };
