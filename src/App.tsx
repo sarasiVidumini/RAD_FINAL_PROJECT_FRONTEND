@@ -1,4 +1,4 @@
-// src/App.tsx
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
@@ -16,6 +16,7 @@ import Requests from './pages/Requests';
 import GroupChat from './pages/GroupChat';
 import NoteDetailsPage from './pages/NoteDetailsPage';
 import Profile from './pages/Profile';
+import Footer from './components/Footer';
 
 import { useAuth } from './hooks/useAuth';
 
@@ -51,6 +52,10 @@ function DynamicDashboardFallback() {
 }
 
 export default function App() {
+
+  const { user } = useAuth();
+
+
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
@@ -166,6 +171,9 @@ export default function App() {
           <Route path="*" element={<DynamicDashboardFallback />} />
         </Routes>
         
+        {user && <Footer user={user} />}
+
+
         <Toaster 
           position="top-center" 
           toastOptions={{

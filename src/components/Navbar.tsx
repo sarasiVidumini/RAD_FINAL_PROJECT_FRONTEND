@@ -198,61 +198,25 @@ export default function Navbar() {
           <div className="flex flex-col gap-3">
             {user ? (
               <>
-                <Link
-                  to="/dashboard"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/dashboard') ? 'bg-yellow-400/10 text-yellow-400' : 'text-zinc-300 hover:bg-white/5'}`}
-                >
-                  <LayoutDashboard size={24} /> Dashboard
-                </Link>
 
-                <Link
-                  to="/requests"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/requests') ? 'bg-yellow-400/10 text-yellow-400' : 'text-zinc-300 hover:bg-white/5'}`}
-                >
-                  <MessageSquare size={24} /> Requests
-                </Link>
-
-                <Link
-                  to="/group-chat"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/group-chat') ? 'bg-yellow-400/10 text-yellow-400' : 'text-zinc-300 hover:bg-white/5'}`}
-                >
-                  <Users size={24} /> Group Sync
-                </Link>
-
-                <Link
-                  to="/upload"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/upload') ? 'bg-yellow-400/10 text-yellow-400' : 'text-zinc-300 hover:bg-white/5'}`}
-                >
-                  <Upload size={24} /> Upload Notes
-                </Link>
-
-                {/* AI Study Mode — students only, mobile */}
-                {isStudent && (
-                  <Link
-                    to="/study"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-4 px-5 py-4 rounded-xl text-lg transition ${isActive('/study') ? 'bg-amber-500/15 text-amber-400' : 'text-zinc-300 hover:bg-amber-500/5 hover:text-amber-400'}`}
-                  >
-                    <div className="relative">
-                      <Brain size={24} />
-                      {!isActive('/study') && (
-                        <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60" />
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400" />
-                        </span>
+                <div className="flex items-center gap-3 px-5 py-4 border-b border-white/10 mb-2">
+                  <div className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center">
+                      {user.avatarUrl ? (
+                          <img src={`http://localhost:5000${user.avatarUrl}`} className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          <User size={20} className="text-yellow-400" />
                       )}
-                    </div>
+                  </div>
+                <div>
 
-                    <span>AI Study Mode</span>
-                    
-                  </Link>
-                )}
+                    <p className="text-white font-medium">{user.name}</p>
+                    <p className="text-zinc-500 text-xs">{user.email}</p>
+                  </div>
+                </div>
 
-                  <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-4 text-zinc-300 border border-white/10 rounded-xl mb-2">View Profile</Link>
+
+                {/* user profile  */}
+                <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-4 text-zinc-300 border border-white/10 rounded-xl mb-2">View Profile</Link>
 
                 {isSystemAdmin && (
                   <Link
