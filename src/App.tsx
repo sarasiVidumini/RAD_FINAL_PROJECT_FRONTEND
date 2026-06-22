@@ -8,11 +8,12 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Upload from './pages/Upload';
 import Dashboard from './pages/student/Dashboard';
+import AiStudyMode from './pages/student/Aistudymode';   // ← NEW
 import StudentExperts from './pages/StudentExperts';
 import ExpertDashboard from './pages/expert/ExpertDashboard'; 
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import Requests from './pages/Requests';
-import GroupChat from './pages/GroupChat'; // High-fidelity communication module
+import GroupChat from './pages/GroupChat';
 import NoteDetailsPage from './pages/NoteDetailsPage';
 
 import { useAuth } from './hooks/useAuth';
@@ -76,6 +77,16 @@ export default function App() {
             } 
           />
 
+          {/* ── AI Study Mode — students only ── */}
+          <Route
+            path="/study"
+            element={
+              <PrivateRoute allowedRoles={['student']}>
+                <AiStudyMode />
+              </PrivateRoute>
+            }
+          />
+
           <Route 
             path="/experts" 
             element={
@@ -103,7 +114,7 @@ export default function App() {
             } 
           />
 
-          {/* Secure Live Group Chat Matrix Route Link */}
+
           <Route 
             path="/group-chat" 
             element={
