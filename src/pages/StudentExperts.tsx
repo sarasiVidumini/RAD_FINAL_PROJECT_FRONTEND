@@ -80,7 +80,7 @@ export default function StudentExperts() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'https://rad-final-project-backend.vercel.app/api/chat/verify-email',
+        'https://radfinalprojectbackend-production.up.railway.app/api/chat/verify-email',
         { email: emailInput.trim() },
         { headers: { Authorization: `Bearer ${token}` } }
       );

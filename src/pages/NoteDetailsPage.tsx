@@ -24,7 +24,7 @@ const NoteDetailsPage: React.FC = () => {
         setLoading(true);
         const token = localStorage.getItem('token');
         
-        const response = await axios.get(`https://rad-final-project-backend.vercel.app/api/notes`, {
+        const response = await axios.get(`https://radfinalprojectbackend-production.up.railway.app/api/notes`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         

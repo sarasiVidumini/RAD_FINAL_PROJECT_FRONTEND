@@ -34,7 +34,7 @@ const SecurePdfViewer: React.FC<SecurePdfViewerProps> = ({ noteId, fileIndex = 0
           withCredentials: false // Overrides default session cookies blocks on cross-origin handshakes
         });
 
-        const targetEndpoint = `https://rad-final-project-backend.vercel.app/api/notes/${noteId}/view?index=${fileIndex}&token=${encodeURIComponent(rawTokenParam)}`;
+        const targetEndpoint = `https://radfinalprojectbackend-production.up.railway.app/api/notes/${noteId}/view?index=${fileIndex}&token=${encodeURIComponent(rawTokenParam)}`;
 
         const response = await isolatedClient.get(targetEndpoint, {
           headers: {

@@ -30,14 +30,14 @@ export default function GroupChat() {
 
   useEffect(() => {
     // 1. Recover preceding group data logs
-    axios.get('https://rad-final-project-backend.vercel.app/api/chat/history', {
+    axios.get('https://radfinalprojectbackend-production.up.railway.app/api/chat/history', {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     })
     .then(res => setMessages(res.data || []))
     .catch(() => console.error("Could not sync message history logs down."));
 
     // 2. Open full duplex WebSockets lines
-    socketRef.current = io('https://rad-final-project-backend.vercel.app', { withCredentials: true });
+    socketRef.current = io('https://radfinalprojectbackend-production.up.railway.app', { withCredentials: true });
 
     socketRef.current.on('receive_group_message', (msg: GroupMessage) => {
       setMessages(prev => [...prev, msg]);
@@ -179,7 +179,7 @@ export default function GroupChat() {
     dataForm.append('file', asset);
 
     try {
-      const res = await axios.post('https://rad-final-project-backend.vercel.app/api/chat/upload', dataForm, {
+      const res = await axios.post('https://radfinalprojectbackend-production.up.railway.app/api/chat/upload', dataForm, {
         headers: { 
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('token')}`

@@ -189,7 +189,7 @@ export default function AiStudyMode() {
   // ─── Backend API Call (Secure - uses key from .env) ───────────────────────
   const callAI = async (tool: ToolId, payload: any) => {
   // Add the full origin if needed, or ensure the leading slash is treated as root
-  const res = await fetch('https://rad-final-project-backend.vercel.app/api/ai/study', {
+  const res = await fetch('https://radfinalprojectbackend-production.up.railway.app/api/ai/study', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tool, ...payload }),
