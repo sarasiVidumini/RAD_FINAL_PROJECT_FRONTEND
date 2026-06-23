@@ -24,7 +24,7 @@ interface ChatProps {
   verifiedUsername?: string;
 }
 
-export default function PrivateChatModal({ userId, recipientName, onClose, currentUser, verifiedUserEmail, verifiedUsername }: ChatProps) {
+export default function PrivateChatModal({ userId, recipientName, onClose, currentUser,  verifiedUsername }: ChatProps) {
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [messageText, setMessageText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -57,7 +57,7 @@ export default function PrivateChatModal({ userId, recipientName, onClose, curre
   const fetchMessages = async () => {
     if (!userId || userId === 'undefined') return;
     try {
-      const res = await axios.get(`http://localhost:5000/api/chat/${userId}`, { headers });
+      const res = await axios.get(`https://rad-final-project-backend.vercel.app/api/chat/${userId}`, { headers });
       setMessages(res.data);
     } catch (err: any) {
       console.error("Error fetching chat stream:", err.message);
@@ -87,7 +87,7 @@ export default function PrivateChatModal({ userId, recipientName, onClose, curre
 
     try {
       const res = await axios.post(
-        'http://localhost:5000/api/chat',
+        'https://rad-final-project-backend.vercel.app/api/chat',
         { receiverId: userId, content: messageText, attachments: finalAttachments },
         { headers }
       );
@@ -109,7 +109,7 @@ export default function PrivateChatModal({ userId, recipientName, onClose, curre
 
     setUploading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/chat/upload', formData, {
+      const res = await axios.post('https://rad-final-project-backend.vercel.app/api/chat/upload', formData, {
         headers: { ...headers, 'Content-Type': 'multipart/form-data' }
       });
       
@@ -149,7 +149,7 @@ export default function PrivateChatModal({ userId, recipientName, onClose, curre
   const handleUpdateMessage = async (msgId: string) => {
     if (!editText.trim()) return;
     try {
-      const res = await axios.put(`http://localhost:5000/api/chat/${msgId}`, { content: editText }, { headers });
+      const res = await axios.put(`https://rad-final-project-backend.vercel.app/api/chat/${msgId}`, { content: editText }, { headers });
       setMessages(messages.map(m => m._id === msgId ? res.data : m));
       setEditingMessageId(null);
       toast.success("Message updated successfully!", toastOptions);
@@ -197,7 +197,7 @@ export default function PrivateChatModal({ userId, recipientName, onClose, curre
 
   const executeDelete = async (msgId: string) => {
     try {
-      const res = await axios.delete(`http://localhost:5000/api/chat/${msgId}`, { headers });
+      const res = await axios.delete(`https://rad-final-project-backend.vercel.app/api/chat/${msgId}`, { headers });
       setMessages(messages.map(m => m._id === msgId ? res.data : m));
       toast.success("Message removed.", toastOptions);
     } catch (err) {

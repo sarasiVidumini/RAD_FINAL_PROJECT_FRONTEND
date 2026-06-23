@@ -7,7 +7,7 @@ export default defineConfig({
     port: 5173, // Ensure this matches your expected frontend port
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://rad-final-project-backend.vercel.app',
         changeOrigin: true,
         secure: false,
       }

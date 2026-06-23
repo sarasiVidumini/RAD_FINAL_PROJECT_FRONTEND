@@ -4,8 +4,8 @@ import API from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 import {
-  Plus, CheckCircle, Clock, User, X, Zap,
-  Search, Filter, Grid3x3, List, ArrowUpDown,
+  Plus, CheckCircle, X, Zap,
+  Search, Filter, Grid3x3, List, 
   Sparkles, TrendingUp, Award, Globe, Compass
 } from 'lucide-react';
 import RequestCard from '../components/RequestCard';
@@ -83,7 +83,7 @@ export default function Requests() {
     }
   };
 
-  const handleOpenChat = (userId: string, userName: string) => {
+  const handleOpenChat = (_: string, userName: string) => {
     // This will be handled by the parent component or navigate to chat
     toast.success(`Opening chat with ${userName}...`);
     // You can implement navigation to chat or open modal here

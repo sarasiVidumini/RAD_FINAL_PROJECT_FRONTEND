@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { CheckCircle2, FileText, ExternalLink, MessageSquare, Clock, User, Calendar, Zap, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

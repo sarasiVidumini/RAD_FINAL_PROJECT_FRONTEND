@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import API from '../../lib/api';
 import toast from 'react-hot-toast';
 import {
-  BookOpen, Search, Filter, Download,
+  BookOpen, Search,  Download,
   Brain, ArrowRight, X, CheckCircle2,
   HelpCircle, Timer, Sparkles, AlertTriangle,
   Award, MessageSquare, ExternalLink, ClipboardList,
@@ -78,6 +78,7 @@ export default function Dashboard() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [requests, setRequests] = useState<StudentRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [requestsLoading, setRequestsLoading] = useState(false);
   const [search, setSearch] = useState('');
 
   const [view, setView] = useState<ViewState>({ level: 'source' });
@@ -133,11 +134,14 @@ export default function Dashboard() {
   };
 
   const fetchStudentRequests = async () => {
+    setRequestsLoading(true);
     try {
       const res = await API.get('/requests');
       setRequests(res.data || []);
     } catch (error) {
       console.error("Failed to fetch student requests ecosystem map.");
+    } finally {
+      setRequestsLoading(false);
     }
   };
 
@@ -186,6 +190,9 @@ export default function Dashboard() {
     }
   };
 
+
+  
+
   const evaluateQuiz = (isTimeout = false) => {
     stopTimer();
     let score = 0;
@@ -196,7 +203,7 @@ export default function Dashboard() {
     setQuizScore(score);
 
     if (isTimeout) {
-      toast((t) => (
+      toast(() => (
         <div className="flex items-center gap-3">
           <AlertTriangle className="text-amber-500 shrink-0" size={24} />
           <div>
@@ -444,7 +451,7 @@ export default function Dashboard() {
                     </div>
                     <div className="relative flex items-center justify-between mt-4">
                       <span className="font-mono-vault text-[11px] font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full text-amber-400">
-                        {notes.filter(n => !isExpertUploader(n)).length} DOCS
+                        {loading ? <span className="inline-block w-10 h-3 bg-amber-500/20 rounded animate-pulse" /> : `${notes.filter(n => !isExpertUploader(n)).length} DOCS`}
                       </span>
                       <ArrowRight size={16} className="text-zinc-700 group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
                     </div>
@@ -464,7 +471,7 @@ export default function Dashboard() {
                     </div>
                     <div className="relative flex items-center justify-between mt-4">
                       <span className="font-mono-vault text-[11px] font-bold bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 rounded-full text-cyan-400">
-                        {notes.filter(n => isExpertUploader(n)).length} DOCS
+                        {loading ? <span className="inline-block w-10 h-3 bg-cyan-500/20 rounded animate-pulse" /> : `${notes.filter(n => isExpertUploader(n)).length} DOCS`}
                       </span>
                       <ArrowRight size={16} className="text-zinc-700 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
                     </div>
@@ -502,7 +509,7 @@ export default function Dashboard() {
                         </div>
                         <div className="relative z-10 flex items-center justify-between mt-4">
                           <span className={`font-mono-vault text-[11px] font-bold px-2.5 py-1 rounded-full border ${accent === 'cyan' ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'}`}>
-                            {semesterCounts(view.source)[sem] || 0} DOCS
+                            {loading ? <span className="inline-block w-8 h-2.5 bg-white/10 rounded animate-pulse" /> : `${semesterCounts(view.source)[sem] || 0} DOCS`}
                           </span>
                           <ArrowRight size={16} className={`text-zinc-700 group-hover:translate-x-1 transition-all ${accent === 'cyan' ? 'group-hover:text-cyan-400' : 'group-hover:text-amber-400'}`} />
                         </div>
@@ -542,9 +549,15 @@ export default function Dashboard() {
                           </h3>
                         </div>
                         <div className="flex items-center gap-3 mt-4 text-[11px] font-medium text-zinc-500 font-mono-vault">
-                          <span className="flex items-center gap-1"><NotebookText size={12} className="text-amber-400/70" /> {counts.notes}</span>
-                          <span className="flex items-center gap-1"><FileText size={12} className="text-cyan-400/70" /> {counts.papers}</span>
-                          {total === 0 && <span className="text-zinc-700 italic font-sans">empty</span>}
+                          {loading ? (
+                            <span className="inline-block w-20 h-3 bg-white/[0.06] rounded animate-pulse" />
+                          ) : (
+                            <>
+                              <span className="flex items-center gap-1"><NotebookText size={12} className="text-amber-400/70" /> {counts.notes}</span>
+                              <span className="flex items-center gap-1"><FileText size={12} className="text-cyan-400/70" /> {counts.papers}</span>
+                              {total === 0 && <span className="text-zinc-700 italic font-sans">empty</span>}
+                            </>
+                          )}
                         </div>
                       </button>
                     );
@@ -581,7 +594,24 @@ export default function Dashboard() {
 
                 {/* Document list */}
                 <div className="space-y-3">
-                  {getFilteredDocs(view.semester, view.code, activeTab, view.source).length === 0 ? (
+                  {loading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="p-4 border border-white/[0.06] bg-[#0a0a0c] rounded-2xl animate-pulse space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-2 flex-1">
+                            <div className="h-3.5 bg-white/[0.07] rounded w-3/4" />
+                            <div className="h-2.5 bg-white/[0.04] rounded w-1/2" />
+                          </div>
+                          <div className="h-5 w-10 bg-white/[0.06] rounded-md shrink-0" />
+                        </div>
+                        <div className="pt-2 border-t border-white/[0.06] flex gap-4">
+                          <div className="h-2.5 bg-white/[0.04] rounded w-28" />
+                          <div className="h-2.5 bg-white/[0.04] rounded w-16" />
+                          <div className="h-2.5 bg-white/[0.04] rounded w-12" />
+                        </div>
+                      </div>
+                    ))
+                  ) : getFilteredDocs(view.semester, view.code, activeTab, view.source).length === 0 ? (
                     <div className="bg-[#0a0a0c] border border-white/[0.06] rounded-2xl p-10 text-center">
                       {activeTab === 'note' ? (
                         <NotebookText size={28} className="text-zinc-800 mx-auto mb-2" />
@@ -639,7 +669,24 @@ export default function Dashboard() {
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {requests.map((req) => {
+                {requestsLoading ? (
+                  Array.from({ length: 2 }).map((_, i) => (
+                    <div key={i} className="bg-[#0a0a0c] border border-white/[0.06] rounded-2xl p-5 animate-pulse space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="h-4 w-12 bg-white/[0.06] rounded-md" />
+                        <div className="h-4 w-16 bg-white/[0.06] rounded-md" />
+                      </div>
+                      <div className="h-3.5 bg-white/[0.07] rounded w-3/4" />
+                      <div className="h-2.5 bg-white/[0.04] rounded w-1/3" />
+                      <div className="space-y-1.5">
+                        <div className="h-2.5 bg-white/[0.04] rounded w-full" />
+                        <div className="h-2.5 bg-white/[0.04] rounded w-2/3" />
+                      </div>
+                    </div>
+                  ))
+                ) : requests.length === 0 ? (
+                  <p className="text-xs text-zinc-600 col-span-2 py-4">No active requests logged in your tracking history.</p>
+                ) : requests.map((req) => {
                   const isFulfilled = req.status === 'fulfilled';
                   return (
                     <div
@@ -687,10 +734,6 @@ export default function Dashboard() {
                     </div>
                   );
                 })}
-
-                {requests.length === 0 && (
-                  <p className="text-xs text-zinc-600 col-span-2 py-4">No active requests logged in your tracking history.</p>
-                )}
               </div>
             </div>
 

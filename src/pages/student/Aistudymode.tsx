@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState,  useEffect } from 'react';
 import {
-  Brain, Sparkles, BookOpen, Zap, LayoutList,
+  Brain, Sparkles,  Zap, 
   Calendar, ChevronRight, RotateCcw, Copy,
-  CheckCheck, Loader2, X, ChevronDown, ChevronUp,
+  CheckCheck, Loader2,   
   FileText, Lightbulb, ClipboardList, CreditCard,
   Clock, ArrowLeft, Send
 } from 'lucide-react';
@@ -189,7 +189,7 @@ export default function AiStudyMode() {
   // ─── Backend API Call (Secure - uses key from .env) ───────────────────────
   const callAI = async (tool: ToolId, payload: any) => {
   // Add the full origin if needed, or ensure the leading slash is treated as root
-  const res = await fetch('http://localhost:5000/api/ai/study', {
+  const res = await fetch('https://rad-final-project-backend.vercel.app/api/ai/study', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tool, ...payload }),

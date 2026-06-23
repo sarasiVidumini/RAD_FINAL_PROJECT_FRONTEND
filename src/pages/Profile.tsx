@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { User, Upload, Camera } from 'lucide-react';
+import { User, Camera } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Profile() {

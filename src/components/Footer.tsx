@@ -1,8 +1,7 @@
-// src/components/Footer.tsx
 import { LayoutGrid, MessageSquare, Users, Upload, Brain } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
-const Footer = ({ user }: { user: any }) => {
+const Footer = ({}: { user: any }) => {
   const location = useLocation();
   
   // Helper to check if the route is active

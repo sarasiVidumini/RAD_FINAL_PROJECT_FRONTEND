@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import API from '../lib/api';
-import { Note } from '../types';
+import  { useState, useEffect } from 'react';
 
 import { 
-  Search, 
-  BookOpen, 
+  Search,  
   Sparkles, 
   TrendingUp, 
   ShieldCheck, 
@@ -12,11 +9,10 @@ import {
   Users,
   Award
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 export default function Home() {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
+  // const [notes, setNotes] = useState<Note[]>([]);
+  // const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('');
 
@@ -41,7 +37,6 @@ export default function Home() {
   ]);
 
   useEffect(() => {
-    fetchNotes();
 
     // Simulate live knowledge growth
     const interval = setInterval(() => {
@@ -56,19 +51,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [search, subjectFilter]);
 
-  const fetchNotes = async () => {
-    try {
-      setLoading(true);
-      const res = await API.get('/notes', {
-        params: { search, subject: subjectFilter || undefined }
-      });
-      setNotes(res.data);
-    } catch (error) {
-      toast.error("Failed to load notes");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Split data into two rows (8 on top, 8 on bottom)
   const topRow = knowledgeData.slice(0, 8);

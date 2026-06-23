@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import API from "../../lib/api";
 import { Note } from "../../types";
@@ -409,7 +409,7 @@ export default function AdminDashboard() {
         )}
         
       </div>
-      
+
     </div>
   );
 }

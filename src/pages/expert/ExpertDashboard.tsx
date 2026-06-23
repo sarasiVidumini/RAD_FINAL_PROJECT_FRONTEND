@@ -5,12 +5,13 @@ import NoteCard from '../../components/NoteCard';
 import toast from 'react-hot-toast';
 import { 
   Award, 
+
   UploadCloud, 
-  CheckCircle, 
+
   BookOpen, 
   FileText, 
   Clock, 
-  TrendingUp, 
+   
   ArrowRight, 
   MessageSquare,
   Sparkles,
@@ -60,7 +61,7 @@ export default function ExpertDashboard() {
   const [replyText, setReplyText] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const {} = useAuth();
   
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 

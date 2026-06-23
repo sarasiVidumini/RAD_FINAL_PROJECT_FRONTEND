@@ -1,60 +1,35 @@
 
-import React from 'react';
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { useAuth } from './hooks/useAuth';
+
+// Components
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Upload from './pages/Upload';
 import Dashboard from './pages/student/Dashboard';
-import AiStudyMode from './pages/student/Aistudymode';   // ← NEW
+import AiStudyMode from './pages/student/Aistudymode';
 import StudentExperts from './pages/StudentExperts';
-import ExpertDashboard from './pages/expert/ExpertDashboard'; 
+import ExpertDashboard from './pages/expert/ExpertDashboard';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import Requests from './pages/Requests';
 import GroupChat from './pages/GroupChat';
 import NoteDetailsPage from './pages/NoteDetailsPage';
+
 import Profile from './pages/Profile';
-import Footer from './components/Footer';
 
-import { useAuth } from './hooks/useAuth';
-
-function PrivateRoute({ children, allowedRoles }: { 
-  children: React.ReactElement; 
-  allowedRoles?: ('student' | 'expert' | 'admin')[] 
-}) {
-  const { user } = useAuth();
-  const token = localStorage.getItem('token');
-  
-  if (!user && !token) return <Navigate to="/login" replace />;
-  
-  if (user && allowedRoles && !allowedRoles.includes(user.role)) {
-    if (user.role === 'admin' || user.email?.toLowerCase() === 'admin@glowcare.ai' || user.email?.toLowerCase() === 'admin@notevault.com') {
-      return <Navigate to="/admin" replace />;
-    }
-    if (user.role === 'expert') return <Navigate to="/expert-dashboard" replace />;
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return children;
-}
-
-function DynamicDashboardFallback() {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
-  
-  if (user.role === 'admin' || user.email?.toLowerCase() === 'admin@glowcare.ai' || user.email?.toLowerCase() === 'admin@notevault.com') {
-    return <Navigate to="/admin" replace />;
-  }
-  if (user.role === 'expert') return <Navigate to="/expert-dashboard" replace />;
-  return <Navigate to="/dashboard" replace />;
-}
 
 export default function App() {
 
   const { user } = useAuth();
-
+  
 
   return (
     <Router>
@@ -65,124 +40,25 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
-          <Route 
-            path="/upload" 
-            element={
-              <PrivateRoute allowedRoles={['student', 'expert', 'admin']}>
-                <Upload />
-              </PrivateRoute>
-            } 
-          />
-          
-          <Route 
-            path="/dashboard" 
-            element={
-              <PrivateRoute allowedRoles={['student']}>
-                <Dashboard />
-              </PrivateRoute>
-            } 
-          />
+          <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['student']}><Dashboard /></ProtectedRoute>} />
+          <Route path="/upload" element={<ProtectedRoute allowedRoles={['student', 'expert', 'admin']}><Upload /></ProtectedRoute>} />
+          <Route path="/study" element={<ProtectedRoute allowedRoles={['student']}><AiStudyMode /></ProtectedRoute>} />
+          <Route path="/experts" element={<ProtectedRoute allowedRoles={['student', 'admin']}><StudentExperts /></ProtectedRoute>} />
+          <Route path="/expert-dashboard" element={<ProtectedRoute allowedRoles={['expert']}><ExpertDashboard /></ProtectedRoute>} />
+          <Route path="/requests" element={<ProtectedRoute allowedRoles={['student', 'expert', 'admin']}><Requests /></ProtectedRoute>} />
+          <Route path="/group-chat" element={<ProtectedRoute allowedRoles={['student', 'expert', 'admin']}><GroupChat /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute allowedRoles={['student', 'expert', 'admin']}><Profile /></ProtectedRoute>} />
+          <Route path="/notes/:noteId" element={<ProtectedRoute allowedRoles={['student', 'expert', 'admin']}><NoteDetailsPage /></ProtectedRoute>} />
 
-            <Route 
-              path="/profile" 
-              element={
-                  <PrivateRoute allowedRoles={['student', 'expert', 'admin']}>
-                    <Profile />
-                  </PrivateRoute>
-              } 
-            />
-
-          
-          {/* ── AI Study Mode — students only ── */}
-          <Route
-            path="/study"
-            element={
-              <PrivateRoute allowedRoles={['student']}>
-                <AiStudyMode />
-              </PrivateRoute>
-            }
-          />
-
-          <Route 
-            path="/experts" 
-            element={
-              <PrivateRoute allowedRoles={['student', 'admin']}>
-                <StudentExperts />
-              </PrivateRoute>
-            } 
-          />
-
-          <Route 
-            path="/expert-dashboard" 
-            element={
-              <PrivateRoute allowedRoles={['expert']}>
-                <ExpertDashboard />
-              </PrivateRoute>
-            } 
-          />
-
-          <Route 
-            path="/requests" 
-            element={
-              <PrivateRoute allowedRoles={['student', 'expert', 'admin']}>
-                <Requests />
-              </PrivateRoute>
-            } 
-          />
-
-
-          <Route 
-            path="/group-chat" 
-            element={
-              <PrivateRoute allowedRoles={['student', 'expert', 'admin']}>
-                <GroupChat />
-              </PrivateRoute>
-            } 
-          />
-
-          <Route 
-            path="/admin" 
-            element={
-              <PrivateRoute allowedRoles={['admin']}>
-                <AdminDashboard />
-              </PrivateRoute>
-            } 
-          />
-
-          <Route 
-            path="/admin/users" 
-            element={
-              <PrivateRoute allowedRoles={['admin']}>
-                <AdminDashboard />
-              </PrivateRoute>
-            } 
-          />
-
-          <Route 
-            path="/notes/:noteId" 
-            element={
-              <PrivateRoute allowedRoles={['student', 'expert', 'admin']}>
-                <NoteDetailsPage />
-              </PrivateRoute>
-            } 
-          />
-
-          <Route path="/home" element={<DynamicDashboardFallback />} />
-          <Route path="*" element={<DynamicDashboardFallback />} />
+          {/* Fallback route */}
+          <Route path="*" element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
         </Routes>
         
         {user && <Footer user={user} />}
-
-
-        <Toaster 
-          position="top-center" 
-          toastOptions={{
-            style: {
-              background: '#333',
-              color: '#fff',
-            },
-          }}
-        />
+        
+        <Toaster position="top-center" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
       </div>
     </Router>
   );

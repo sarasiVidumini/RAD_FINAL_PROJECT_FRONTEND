@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import axios from 'react-redux'; // or standard 'axios' import depending on setup
+
 import axiosInstance from 'axios';
 
 interface SecurePdfViewerProps {
@@ -33,7 +34,7 @@ const SecurePdfViewer: React.FC<SecurePdfViewerProps> = ({ noteId, fileIndex = 0
           withCredentials: false // Overrides default session cookies blocks on cross-origin handshakes
         });
 
-        const targetEndpoint = `http://localhost:5000/api/notes/${noteId}/view?index=${fileIndex}&token=${encodeURIComponent(rawTokenParam)}`;
+        const targetEndpoint = `https://rad-final-project-backend.vercel.app/api/notes/${noteId}/view?index=${fileIndex}&token=${encodeURIComponent(rawTokenParam)}`;
 
         const response = await isolatedClient.get(targetEndpoint, {
           headers: {
