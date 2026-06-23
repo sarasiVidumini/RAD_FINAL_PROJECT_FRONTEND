@@ -11,6 +11,8 @@ interface NoteData {
   files: string[];
 }
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 const NoteDetailsPage: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
   const navigate = useNavigate();
@@ -24,7 +26,7 @@ const NoteDetailsPage: React.FC = () => {
         setLoading(true);
         const token = localStorage.getItem('token');
         
-        const response = await axios.get(`https://radfinalprojectbackend-production.up.railway.app/api/notes`, {
+        const response = await axios.get(`${API_URL}/api/notes`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         

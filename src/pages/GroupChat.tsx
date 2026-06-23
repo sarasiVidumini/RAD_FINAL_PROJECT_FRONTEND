@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { GroupMessage } from '../types';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 const REACTION_STAMPS = ["👍", "❤️", "😂", "😮", "🔥", "✅", "🙏"];
 
 export default function GroupChat() {
@@ -30,14 +32,14 @@ export default function GroupChat() {
 
   useEffect(() => {
     // 1. Recover preceding group data logs
-    axios.get('https://radfinalprojectbackend-production.up.railway.app/api/chat/history', {
+    axios.get(`${API_URL}/api/chat/history`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     })
     .then(res => setMessages(res.data || []))
     .catch(() => console.error("Could not sync message history logs down."));
 
     // 2. Open full duplex WebSockets lines
-    socketRef.current = io('https://radfinalprojectbackend-production.up.railway.app', { withCredentials: true });
+    socketRef.current = io(`${API_URL}`, { withCredentials: true });
 
     socketRef.current.on('receive_group_message', (msg: GroupMessage) => {
       setMessages(prev => [...prev, msg]);
@@ -179,7 +181,7 @@ export default function GroupChat() {
     dataForm.append('file', asset);
 
     try {
-      const res = await axios.post('https://radfinalprojectbackend-production.up.railway.app/api/chat/upload', dataForm, {
+      const res = await axios.post('${API_URL}/api/chat/upload', dataForm, {
         headers: { 
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('token')}`

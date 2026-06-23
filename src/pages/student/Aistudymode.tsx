@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ToolId = 'summarizer' | 'explainer' | 'quiz' | 'flashcards' | 'planner';
 
@@ -189,7 +191,7 @@ export default function AiStudyMode() {
   // ─── Backend API Call (Secure - uses key from .env) ───────────────────────
   const callAI = async (tool: ToolId, payload: any) => {
   // Add the full origin if needed, or ensure the leading slash is treated as root
-  const res = await fetch('https://radfinalprojectbackend-production.up.railway.app/api/ai/study', {
+  const res = await fetch(`${API_URL}/api/ai/study`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tool, ...payload }),

@@ -13,6 +13,8 @@ const SecurePdfViewer: React.FC<SecurePdfViewerProps> = ({ noteId, fileIndex = 0
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const API_URL = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
     const fetchSecurePdf = async (): Promise<void> => {
       try {
@@ -34,7 +36,7 @@ const SecurePdfViewer: React.FC<SecurePdfViewerProps> = ({ noteId, fileIndex = 0
           withCredentials: false // Overrides default session cookies blocks on cross-origin handshakes
         });
 
-        const targetEndpoint = `https://radfinalprojectbackend-production.up.railway.app/api/notes/${noteId}/view?index=${fileIndex}&token=${encodeURIComponent(rawTokenParam)}`;
+        const targetEndpoint = `${API_URL}/api/notes/${noteId}/view?index=${fileIndex}&token=${encodeURIComponent(rawTokenParam)}`;
 
         const response = await isolatedClient.get(targetEndpoint, {
           headers: {

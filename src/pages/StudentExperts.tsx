@@ -5,6 +5,9 @@ import PrivateChatModal from '../components/PrivateChatModal';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
+
 export default function StudentExperts() {
   const [experts, setExperts] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -80,7 +83,7 @@ export default function StudentExperts() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'https://radfinalprojectbackend-production.up.railway.app/api/chat/verify-email',
+        `${API_URL}/api/chat/verify-email`,
         { email: emailInput.trim() },
         { headers: { Authorization: `Bearer ${token}` } }
       );
